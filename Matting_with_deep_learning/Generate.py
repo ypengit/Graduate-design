@@ -5,7 +5,7 @@ import random
 
 path = '/tmp/deep_matting/'
 train_image_path  = path + 'input_training_lowres'
-trimap_image_path = path + 'trimap_image_path'
+trimap_image_path = path + 'trimap_training_lowres/Trimap1'
 alpha_image_path  = path + 'gt_training_lowres'
 
 width = 20
@@ -30,10 +30,23 @@ data['trimap']= files(trimap_image_path)
 data['alpha'] = files(alpha_image_path)
 num = len(data['train'])
 
-def rand_pos(shape):
+def pos_f(index, val):
+    while True:
+        x = random.randrange(data['trimap'][index].shape[0])
+        y = random.randrange(data['trimap'][index].shape[1])
+        if(np.equal(data['trimap'][index][x][y], np.array(val)).all()):
+            return x,y
+
+
+
+def rand_pos(shape, types, index):
     pos = {}
-    pos['x'] = random.randrange(shape[0])
-    pos['y'] = random.randrange(shape[1])
+    if(types == 'I'):
+        pos['x'], pos['y'] = pos_f(index, [128, 128, 128])
+    if(types == 'F'):
+        pos['x'], pos['y'] = pos_f(index, [255, 255, 255])
+    if(types == 'B'):
+        pos['x'], pos['y'] = pos_f(index, [0, 0, 0])
     return pos
 
 def get_block(index,pos):
@@ -64,9 +77,9 @@ def generate():
     data_pics['shape'] = shape
 
     # generate random pos according the shape of pictures
-    data_pics['pos_I'] = rand_pos(shape)
-    data_pics['pos_F'] = rand_pos(shape)
-    data_pics['pos_B'] = rand_pos(shape)
+    data_pics['pos_I'] = rand_pos(shape, 'I', index)
+    data_pics['pos_F'] = rand_pos(shape, 'F', index)
+    data_pics['pos_B'] = rand_pos(shape, 'B', index)
 
     # get the block with pos
     data_pics['F'] = get_block(index, data_pics['pos_F'])
@@ -83,11 +96,6 @@ def generate():
     calalpha  = cal_alpha(F, B, I)
     data_pics['alpha_diff'] = realalpha - calalpha
     return data_pics
-
-for _ in range(100):
-    generate()
-
-
 
 def next(n):
     ret = []
