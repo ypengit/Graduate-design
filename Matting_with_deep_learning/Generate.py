@@ -52,7 +52,7 @@ def rand_pos(shape, types, index):
 def get_block(index,pos):
     x = pos['x'] + width/2
     y = pos['y'] + height/2
-    return np.lib.pad(data['train'][index], ((width/2,width/2),(height/2,height/2),(0,0)), 'constant', constant_values=(-255))[x-width/2:x+width/2,y-height/2:y+height/2]
+    return np.lib.pad(data['train'][index], ((width/2,width/2),(height/2,height/2),(0,0)), 'constant', constant_values=(-255))[x-width/2:x+width/2+1,y-height/2:y+height/2+1]
 
 
 def real_alpha(index, pos):

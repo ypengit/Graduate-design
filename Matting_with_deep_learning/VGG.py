@@ -3,7 +3,7 @@ import tensorflow as tf
 import tools
 
 #%%
-def VGG16(x, is_pretrain=False):
+def VGG16(x, is_pretrain=True):
     
     x = tools.conv('conv1_1', x, 64, kernel_size=[3,3], stride=[1,1,1,1], is_pretrain=is_pretrain)
     x = tools.conv('conv1_2', x, 64, kernel_size=[3,3], stride=[1,1,1,1], is_pretrain=is_pretrain)
@@ -29,11 +29,11 @@ def VGG16(x, is_pretrain=False):
     x = tools.pool('pool3', x, kernel=[1,2,2,1], stride=[1,2,2,1], is_max_pool=True)            
 
     x = tools.FC_layer('fc6', x, out_nodes=4096)
-    x = tools.batch_norm(x)
-
+#     x = tools.batch_norm(x)
+# 
     x = tools.FC_layer('fc7', x, out_nodes=4096)
-    x = tools.batch_norm(x)
-
+#     x = tools.batch_norm(x)
+# 
     return x
         
 
