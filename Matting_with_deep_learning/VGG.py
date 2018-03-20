@@ -42,7 +42,7 @@ def VGG16(x, is_pretrain=True):
 
 #%% TO get better tensorboard figures!
 
-def VGG16N(name, x, is_pretrain=False):
+def VGG16N(name, x, is_pretrain=True):
     
     with tf.name_scope(name + 'VGG16'):
 
@@ -80,11 +80,11 @@ def VGG16N(name, x, is_pretrain=False):
         
         
         x = tools.FC_layer(name, 'fc6', x, out_nodes=4096)        
-        with tf.name_scope('batch_norm1'):
-            x = tools.batch_norm(x)           
+        # with tf.name_scope('batch_norm1'):
+        #     x = tools.batch_norm(x)           
         x = tools.FC_layer(name, 'fc7', x, out_nodes=4096)        
-        with tf.name_scope('batch_norm2'):
-            x = tools.batch_norm(x)            
+        # with tf.name_scope('batch_norm2'):
+        #     x = tools.batch_norm(x)            
     
         return x
 

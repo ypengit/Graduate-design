@@ -8,8 +8,8 @@ train_image_path  = path + 'input_training_lowres'
 trimap_image_path = path + 'trimap_training_lowres/Trimap1'
 alpha_image_path  = path + 'gt_training_lowres'
 
-width = 20
-height = 20
+width = 10
+height = 10
 
 def file_names(file_dir):
     file_paths = []
@@ -94,7 +94,7 @@ def generate():
     # calculate the difference between real_alpha and cal_alpha
     realalpha = real_alpha(index, data_pics['pos_I'])
     calalpha  = cal_alpha(F, B, I)
-    data_pics['alpha_diff'] = realalpha - calalpha
+    data_pics['alpha_diff'] = abs(realalpha - calalpha)
     return data_pics
 
 def next(n):
