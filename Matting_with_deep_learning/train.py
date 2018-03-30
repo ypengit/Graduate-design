@@ -72,7 +72,7 @@ with tf.Session() as sess:
     writer = tf.summary.FileWriter('./train', sess.graph)
     sess.run(init)
     tools.load_with_skip('v', '/tmp/deep_matting/vgg16.npy', sess, ['fc6', 'fc7', 'fc5', 'fc8'])
-    for idx in range(100):
+    for idx in range(1000):
         batch = Generate.next(batch_size)
         F_train = np.array([x['F'] for x in batch])
         B_train = np.array([x['B'] for x in batch])
