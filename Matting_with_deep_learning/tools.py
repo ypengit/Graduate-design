@@ -19,8 +19,8 @@ def conv(outername, layer_name, x, out_channels, kernel_size=[3,3], stride=[1,1,
     '''
 
     in_channels = x.get_shape()[-1]
-    with tf.variable_scope(layer_name):
-        with tf.variable_scope(outername):
+    with tf.variable_scope(outername):
+        with tf.variable_scope(layer_name):
             w = tf.get_variable(name='weights',
                                 trainable=is_pretrain,
                                 shape=[kernel_size[0], kernel_size[1], in_channels, out_channels],
@@ -179,10 +179,10 @@ def load_with_skip(outername, data_path, session, skip_layer):
     data_dict = np.load(data_path, encoding='latin1').item()
     for key in data_dict:
         if key not in skip_layer:
-            with tf.variable_scope(key, reuse=True):
-                for subkey, data in zip(('weights', 'biases'), data_dict[key]):
-                    for name in outername:
-                        session.run(tf.get_variable(name + subkey).assign(data))
+            with tf.variable_scope(outername, reuse=True):
+                with tf.variable_scope(key, reuse=True):
+                    for subkey, data in zip(('weights', 'biases'), data_dict[key]):
+                        session.run(tf.get_variable(subkey).assign(data))
 
    
 #%%

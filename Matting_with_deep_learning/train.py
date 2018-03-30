@@ -25,11 +25,17 @@ def loss(x):
 
 
 def train():
-    x1 = VGG.VGG16N('F', F)
-    x2 = VGG.VGG16N('B', B)
-    x3 = VGG.VGG16N('I', I)
+    x1 = tools.FC_layer('x1','fc1',F,out_nodes=1024)
+    x2 = tools.FC_layer('x2','fc1',B,out_nodes=1024)
+    x3 = tools.FC_layer('x3','fc1',I,out_nodes=1024)
+
+    # x1 = VGG.VGG16N('x', F)
+    # x2 = VGG.VGG16N('x', B)
+    # x3 = VGG.VGG16N('x', I)
 
     x = tf.concat([x1, x2, x3], 1)
+  
+    x = VGG.VGG16N('v', tf.reshape(x, [-1,32,32,3]) , True)
 
     tools.FC_layer('Outer/','fc9', x, out_nodes=4096)
     # with tf.name_scope('batch_norm3'):
@@ -57,6 +63,7 @@ with tf.name_scope('optimizer'):
     optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
     x = train()
     losss = loss(x)
+    tf.summary.scalar('loss', losss)
     train_op = optimizer.minimize(losss)
 
 with tf.Session() as sess:
@@ -64,8 +71,7 @@ with tf.Session() as sess:
     merged = tf.summary.merge_all()
     writer = tf.summary.FileWriter('./train', sess.graph)
     sess.run(init)
-    tools.load_with_skip(outername, '/tmp/deep_matting/vgg16.npy', sess, ['fc6', 'fc7', 'fc5', 'fc8'])
-    tf.summary.scalar('loss', losss)
+    tools.load_with_skip('v', '/tmp/deep_matting/vgg16.npy', sess, ['fc6', 'fc7', 'fc5', 'fc8'])
     for idx in range(100):
         batch = Generate.next(batch_size)
         F_train = np.array([x['F'] for x in batch])
@@ -73,8 +79,9 @@ with tf.Session() as sess:
         I_train = np.array([x['I'] for x in batch])
         alpha_diff_target = np.array([x['alpha_diff'] for x in batch]).reshape([-1, 1])
 	print 'the idx is %05d'% idx, 'before',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-        sess.run(train_op, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
+        summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
         print 'the idx is %05d'% idx, 'after ',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
+        writer.add_summary(summary, idx)
 
 
 
