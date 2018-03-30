@@ -21,6 +21,7 @@ def loss(x):
     with tf.name_scope('loss') as scope:
         loss = tf.reduce_mean(tf.abs(x-alpha_diff), name='loss')
         tf.summary.scalar(scope+'/loss', loss)
+        tf.summary.histogram(scope+'/loss', losss)
         return loss
 
 
@@ -63,16 +64,15 @@ with tf.name_scope('optimizer'):
     optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
     x = train()
     losss = loss(x)
-    tf.summary.scalar('loss', losss)
     train_op = optimizer.minimize(losss)
 
 with tf.Session() as sess:
     init = tf.global_variables_initializer()
     merged = tf.summary.merge_all()
-    writer = tf.summary.FileWriter('./train', sess.graph)
+    writer = tf.summary.FileWriter('./train_3_30', sess.graph)
     sess.run(init)
     tools.load_with_skip('v', '/tmp/deep_matting/vgg16.npy', sess, ['fc6', 'fc7', 'fc5', 'fc8'])
-    for idx in range(1000):
+    for idx in range(100000):
         batch = Generate.next(batch_size)
         F_train = np.array([x['F'] for x in batch])
         B_train = np.array([x['B'] for x in batch])
@@ -82,6 +82,8 @@ with tf.Session() as sess:
         summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
         print 'the idx is %05d'% idx, 'after ',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
         writer.add_summary(summary, idx)
+        if idx % 1000 == 0:
+            learning_rate *= 0.96
 
 
 

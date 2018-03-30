@@ -1,0 +1,39 @@
+/usr/local/lib/python2.7/dist-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+TensorBoard 1.6.0 at http://804c5e61fd62:6006 (Press CTRL+C to quit)
+W0330 11:48:35.343145 Reloader plugin_event_accumulator.py:300] Found more than one graph event per run, or there was a metagraph containing a graph_def, as well as one or more graph events.  Overwriting the graph with the newest event.
+W0330 11:48:45.354283 Reloader plugin_event_accumulator.py:308] Found more than one metagraph event per run. Overwriting the metagraph with the newest event.
+W0330 11:50:30.494745 Reloader plugin_event_accumulator.py:300] Found more than one graph event per run, or there was a metagraph containing a graph_def, as well as one or more graph events.  Overwriting the graph with the newest event.
+W0330 11:50:35.501717 Reloader plugin_event_accumulator.py:308] Found more than one metagraph event per run. Overwriting the metagraph with the newest event.
+/usr/local/lib/python2.7/dist-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+W0330 11:50:39.754782 Reloader plugin_event_accumulator.py:300] Found more than one graph event per run, or there was a metagraph containing a graph_def, as well as one or more graph events.  Overwriting the graph with the newest event.
+W0330 11:50:39.755048 Reloader plugin_event_accumulator.py:308] Found more than one metagraph event per run. Overwriting the metagraph with the newest event.
+W0330 11:50:39.778425 Reloader plugin_event_accumulator.py:300] Found more than one graph event per run, or there was a metagraph containing a graph_def, as well as one or more graph events.  Overwriting the graph with the newest event.
+W0330 11:50:39.778744 Reloader plugin_event_accumulator.py:308] Found more than one metagraph event per run. Overwriting the metagraph with the newest event.
+E0330 11:50:39.899305 MainThread program.py:260] TensorBoard attempted to bind to port 6006, but it was already in use
+TensorBoard attempted to bind to port 6006, but it was already in use
+W0330 11:50:55.523667 Reloader plugin_event_accumulator.py:300] Found more than one graph event per run, or there was a metagraph containing a graph_def, as well as one or more graph events.  Overwriting the graph with the newest event.
+W0330 11:52:55.618898 Reloader plugin_event_accumulator.py:308] Found more than one metagraph event per run. Overwriting the metagraph with the newest event.
+W0330 12:01:05.970048 Reloader plugin_event_multiplexer.py:203] Deleting accumulator '.'
+W0330 12:02:16.026526 Reloader plugin_event_multiplexer.py:203] Deleting accumulator '.'
+/usr/local/lib/python2.7/dist-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+E0330 12:57:57.969840 MainThread program.py:260] TensorBoard attempted to bind to port 6006, but it was already in use
+TensorBoard attempted to bind to port 6006, but it was already in use
+/usr/local/lib/python2.7/dist-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+E0330 12:58:23.928224 MainThread program.py:260] TensorBoard attempted to bind to port 6006, but it was already in use
+TensorBoard attempted to bind to port 6006, but it was already in use
+/usr/local/lib/python2.7/dist-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+2018-03-30 13:02:52.887250: I tensorflow/core/platform/cpu_feature_guard.cc:137] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
+2018-03-30 13:02:52.985759: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:895] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2018-03-30 13:02:52.986009: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1105] Found device 0 with properties: 
+name: GeForce GTX 1080 Ti major: 6 minor: 1 memoryClockRate(GHz): 1.683
+pciBusID: 0000:02:00.0
+totalMemory: 10.91GiB freeMemory: 5.90GiB
+2018-03-30 13:02:52.986022: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1195] Creating TensorFlow device (/device:GPU:0) -> (device: 0, name: GeForce GTX 1080 Ti, pci bus id: 0000:02:00.0, compute capability: 6.1)
+/usr/local/lib/python2.7/dist-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+TensorBoard 1.6.0 at http://804c5e61fd62:6006 (Press CTRL+C to quit)

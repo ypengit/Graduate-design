@@ -95,7 +95,7 @@ w2	tool_show_size.py	/^    w2 = tools.weight([3,3,16,32], is_uniform=True)$/;"	v
 weight	tools.py	/^def weight(kernel_shape, is_uniform = True):$/;"	f
 width	Generate.py	/^width = 10$/;"	v
 width	train.py	/^width  = Generate.width$/;"	v
-writer	train.py	/^    writer = tf.summary.FileWriter('.\/train', sess.graph)$/;"	v
+writer	train.py	/^    writer = tf.summary.FileWriter('.\/train_3_30', sess.graph)$/;"	v
 x	tool_show_size.py	/^x = tf.reshape(cat, [1, 360, 300, 3]) #[1, 360, 300, 3]$/;"	v
 x	train.py	/^    x = train()$/;"	v
 x_BN	tool_show_size.py	/^    x_BN = tools.batch_norm(x_pool2)$/;"	v
