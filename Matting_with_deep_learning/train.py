@@ -5,7 +5,7 @@ import tools
 import tensorflow as tf
 
 
-learning_rate = 0.0001
+learning_rate = 0.00001
 global_step = 10
 batch_size = 128
 outername = ['F/','B/','I/']
@@ -21,7 +21,7 @@ def loss(x):
     with tf.name_scope('loss') as scope:
         loss = tf.reduce_mean(tf.abs(x-alpha_diff), name='loss')
         tf.summary.scalar(scope+'/loss', loss)
-        tf.summary.histogram(scope+'/loss', losss)
+        tf.summary.histogram(scope+'/loss', loss)
         return loss
 
 
@@ -36,7 +36,7 @@ def train():
 
     x = tf.concat([x1, x2, x3], 1)
   
-    x = VGG.VGG16N('v', tf.reshape(x, [-1,32,32,3]) , True)
+    x = VGG.VGG16N('v', tf.reshape(x, [-1,32,32,3]) , False)
 
     tools.FC_layer('Outer/','fc9', x, out_nodes=4096)
     # with tf.name_scope('batch_norm3'):
@@ -69,21 +69,21 @@ with tf.name_scope('optimizer'):
 with tf.Session() as sess:
     init = tf.global_variables_initializer()
     merged = tf.summary.merge_all()
-    writer = tf.summary.FileWriter('./train_3_30', sess.graph)
+    writer = tf.summary.FileWriter('./train_3_44', sess.graph)
     sess.run(init)
     tools.load_with_skip('v', '/tmp/deep_matting/vgg16.npy', sess, ['fc6', 'fc7', 'fc5', 'fc8'])
-    for idx in range(100000):
+    for idx in range(1000000):
         batch = Generate.next(batch_size)
         F_train = np.array([x['F'] for x in batch])
         B_train = np.array([x['B'] for x in batch])
         I_train = np.array([x['I'] for x in batch])
         alpha_diff_target = np.array([x['alpha_diff'] for x in batch]).reshape([-1, 1])
-	print 'the idx is %05d'% idx, 'before',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
+	# print 'the idx is %05d'% idx, 'before',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
         summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-        print 'the idx is %05d'% idx, 'after ',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
+        # print 'the idx is %05d'% idx, 'after ',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
         writer.add_summary(summary, idx)
         if idx % 1000 == 0:
-            learning_rate *= 0.96
+            learning_rate *= 0.985
 
 
 

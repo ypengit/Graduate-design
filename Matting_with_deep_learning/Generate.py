@@ -8,8 +8,8 @@ train_image_path  = path + 'input_training_lowres'
 trimap_image_path = path + 'trimap_training_lowres/Trimap1'
 alpha_image_path  = path + 'gt_training_lowres'
 
-width = 10
-height = 10
+width = 20
+height = 20
 
 def file_names(file_dir):
     file_paths = []
