@@ -56,7 +56,7 @@ def train():
 
     tools.FC_layer('Outer/','fc13', x, out_nodes=1)
     return x
-    
+
 
 with tf.name_scope('optimizer'):
     # optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
@@ -72,15 +72,15 @@ with tf.Session() as sess:
     writer = tf.summary.FileWriter('./train_3_44', sess.graph)
     sess.run(init)
     tools.load_with_skip('v', '/tmp/deep_matting/vgg16.npy', sess, ['fc6', 'fc7', 'fc5', 'fc8'])
-    for idx in range(1000000):
+    for idx in range(10000):
         batch = Generate.next(batch_size)
         F_train = np.array([x['F'] for x in batch])
         B_train = np.array([x['B'] for x in batch])
         I_train = np.array([x['I'] for x in batch])
         alpha_diff_target = np.array([x['alpha_diff'] for x in batch]).reshape([-1, 1])
-	# print 'the idx is %05d'% idx, 'before',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
+        print 'the idx is %05d'% idx, 'before',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
         summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-        # print 'the idx is %05d'% idx, 'after ',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
+        print 'the idx is %05d'% idx, 'after ',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
         writer.add_summary(summary, idx)
         if idx % 1000 == 0:
             learning_rate *= 0.985
