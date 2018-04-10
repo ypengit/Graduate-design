@@ -67,7 +67,7 @@ def batch_norm(x):
     return x
 
 #%%
-def FC_layer(outername, layer_name, x, out_nodes):
+def FC_layer(outername, layer_name, x, out_nodes, name = None):
     '''Wrapper for fully connected layers with RELU activation as default
     Args:
         layer_name: e.g. 'FC1', 'FC2'
@@ -90,7 +90,10 @@ def FC_layer(outername, layer_name, x, out_nodes):
         flat_x = tf.reshape(x, [-1, size]) # flatten into 1D
         
         x = tf.nn.bias_add(tf.matmul(flat_x, w), b)
-        x = tf.nn.relu(x)
+        if name != None:
+            x = tf.nn.relu(x, name = name)
+        else:
+            x = tf.nn.relu(x)
         return x
 
 #%%

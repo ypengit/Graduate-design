@@ -1,17 +1,12 @@
 import tensorflow as tf
-v1 = tf.get_variable("v1", shape=[3], initializer=tf.zeros_initializer)
-v2 = tf.get_variable("v2", shape=[5], initializer=tf.zeros_initializer)
-
-inc_v1 = v1.assign(v1 + 1)
-dec_v2 = v2.assign(v2 - 1)
-
-init_op = tf.global_variables_initializer()
-
-saver = tf.train.Saver()
-
+import Generate
+saver_path = "./model_save/"
+saver_file = saver_path + "model" + ".meta"
+batch_size = 128
+saver = tf.train.import_meta_graph(saver_file) 
 with tf.Session() as sess:
-    sess.run(init_op)
-    sess.run([inc_v1, dec_v2])
-
-    save_path = saver.save(sess, "~/data.npy")
-    print("Model is saved at %s ! " % save_path)
+    saver.restore(sess, tf.train.latest_checkpoint(saver_path))
+    batch = Generate.next(batch_size)
+    graph = tf.get_default_graph()
+    v1 = graph.get_tensor_by_name('Outer/fc13/x:0')
+    print(sess.run(v1, feed_dict=batch))

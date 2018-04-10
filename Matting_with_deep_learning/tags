@@ -6,15 +6,15 @@
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
 B	train.py	/^B = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])$/;"	v
 BATCH_SIZE	training_and_val.py	/^BATCH_SIZE = 32$/;"	v
-B_train	train.py	/^        B_train = np.array([x['B'] for x in batch])$/;"	v
+B_train	train.py	/^            B_train = np.array([x['B'] for x in batch])$/;"	v
 F	train.py	/^F = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])$/;"	v
-FC_layer	tools.py	/^def FC_layer(outername, layer_name, x, out_nodes):$/;"	f
-F_train	train.py	/^        F_train = np.array([x['F'] for x in batch])$/;"	v
+FC_layer	tools.py	/^def FC_layer(outername, layer_name, x, out_nodes, name = None):$/;"	f
+F_train	train.py	/^            F_train = np.array([x['F'] for x in batch])$/;"	v
 I	train.py	/^I = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])$/;"	v
 IMG_H	training_and_val.py	/^IMG_H = 32$/;"	v
 IMG_W	training_and_val.py	/^IMG_W = 32$/;"	v
 IS_PRETRAIN	training_and_val.py	/^IS_PRETRAIN = True$/;"	v
-I_train	train.py	/^        I_train = np.array([x['I'] for x in batch])$/;"	v
+I_train	train.py	/^            I_train = np.array([x['I'] for x in batch])$/;"	v
 MAX_STEP	training_and_val.py	/^MAX_STEP = 15000   # it took me about one hour to complete the training.$/;"	v
 N_CLASSES	training_and_val.py	/^N_CLASSES = 10$/;"	v
 VGG16	VGG.bak.py	/^def VGG16(x, n_classes, is_pretrain=True):$/;"	f
@@ -23,13 +23,16 @@ VGG16N	VGG.bak.py	/^def VGG16N(x, n_classes, is_pretrain=True):$/;"	f
 VGG16N	VGG.py	/^def VGG16N(name, x, is_pretrain=True):$/;"	f
 accuracy	tools.py	/^def accuracy(logits, labels):$/;"	f
 alpha_diff	train.py	/^alpha_diff = tf.placeholder(tf.float32, [None, 1])$/;"	v
-alpha_diff_target	train.py	/^        alpha_diff_target = np.array([x['alpha_diff'] for x in batch]).reshape([-1, 1])$/;"	v
+alpha_diff_target	train.py	/^            alpha_diff_target = np.array([x['alpha_diff'] for x in batch]).reshape([-1, 1])$/;"	v
 alpha_image_path	Generate.py	/^alpha_image_path  = path + 'gt_training_lowres'$/;"	v
 b	tool_show_size.py	/^    b = tools.bias([16])$/;"	v
 b	tool_variable_name.py	/^    b = tf.get_variable(name='biases',$/;"	v
 b2	tool_show_size.py	/^    b2 = tools.bias([32])$/;"	v
+batch	test.py	/^    batch = Generate.next(batch_size)$/;"	v
+batch	train.py	/^            batch = Generate.next(batch_size)$/;"	v
 batch	train.py	/^        batch = Generate.next(batch_size)$/;"	v
 batch_norm	tools.py	/^def batch_norm(x):$/;"	f
+batch_size	test.py	/^batch_size = 128$/;"	v
 batch_size	train.py	/^batch_size = 128$/;"	v
 bias	tools.py	/^def bias(bias_shape):$/;"	f
 cal_alpha	Generate.py	/^def cal_alpha(F, B, I):$/;"	f
@@ -42,18 +45,21 @@ evaluate	training_and_val.py	/^def evaluate():$/;"	f
 file_content	Generate.py	/^def file_content(filename):$/;"	f
 file_names	Generate.py	/^def file_names(file_dir):$/;"	f
 files	Generate.py	/^def files(file_dir):$/;"	f
-files	download.py	/^files = ['gt_training_lowres.zip', 'trimap_training_lowres.zip', 'input_training_lowres.zip','vgg16.npy']$/;"	v
+files	download.py	/^files = ['gt_training_lowres.zip', 'trimap_training_lowres.zip', 'input_training_lowres.zip']$/;"	v
 generate	Generate.py	/^def generate():$/;"	f
 get_block	Generate.py	/^def get_block(index,pos):$/;"	f
 global_step	train.py	/^global_step = 10$/;"	v
-height	Generate.py	/^height = 10$/;"	v
+graph	test.py	/^    graph = tf.get_default_graph()$/;"	v
+graph	train.py	/^        graph = tf.get_default_graph()$/;"	v
+height	Generate.py	/^height = 20$/;"	v
 height	train.py	/^height = Generate.height$/;"	v
-init	train.py	/^    init = tf.global_variables_initializer()$/;"	v
+init	train.py	/^        init = tf.global_variables_initializer()$/;"	v
 initializer	tool_variable_name.py	/^                        initializer=tf.constant_initializer(0.0))$/;"	v
 initializer	tool_variable_name.py	/^                        initializer=tf.constant_initializer(0.0), trainable=False)$/;"	v
 initializer	tool_variable_name.py	/^                        initializer=tf.contrib.layers.xavier_initializer())   $/;"	v
 initializer	tool_variable_name.py	/^                        initializer=tf.contrib.layers.xavier_initializer(), trainable=False)    $/;"	v
-learning_rate	train.py	/^learning_rate = 0.0001$/;"	v
+is_train	train.py	/^is_train = False$/;"	v
+learning_rate	train.py	/^learning_rate = 0.00001$/;"	v
 learning_rate	training_and_val.py	/^learning_rate = 0.01$/;"	v
 load	tools.py	/^def load(data_path, session):$/;"	f
 load_with_skip	tools.py	/^def load_with_skip(outername, data_path, session, skip_layer):$/;"	f
@@ -61,7 +67,7 @@ loss	tools.py	/^def loss(logits, labels):$/;"	f
 loss	train.py	/^def loss(x):$/;"	f
 losss	train.py	/^    losss = loss(x)$/;"	v
 main	download.py	/^def main():$/;"	f
-merged	train.py	/^    merged = tf.summary.merge_all()$/;"	v
+merged	train.py	/^        merged = tf.summary.merge_all()$/;"	v
 next	Generate.py	/^def next(n):$/;"	f
 num	Generate.py	/^num = len(data['train'])$/;"	v
 num_correct_prediction	tools.py	/^def num_correct_prediction(logits, labels):$/;"	f
@@ -76,6 +82,12 @@ print_all_variables	tools.py	/^def print_all_variables(train_only=True):$/;"	f
 rand_pos	Generate.py	/^def rand_pos(shape, types, index):$/;"	f
 read_cifar10	input_data.py	/^def read_cifar10(data_dir, is_train, batch_size, shuffle):$/;"	f
 real_alpha	Generate.py	/^def real_alpha(index, pos):$/;"	f
+saver	test.py	/^saver = tf.train.import_meta_graph(saver_file) $/;"	v
+saver	train.py	/^saver = tf.train.Saver()$/;"	v
+saver_file	test.py	/^saver_file = saver_path + "model" + ".meta"$/;"	v
+saver_file	train.py	/^saver_file = saver_path + "model"$/;"	v
+saver_path	test.py	/^saver_path = ".\/model_save\/"$/;"	v
+saver_path	train.py	/^saver_path = ".\/model_save\/"$/;"	v
 shape	tool_show_size.py	/^def shape(x):$/;"	f
 shape	tool_variable_name.py	/^                        shape=[16],$/;"	v
 shape	tool_variable_name.py	/^                        shape=[3,3,3,16],$/;"	v
@@ -89,13 +101,15 @@ train_op	train.py	/^    train_op = optimizer.minimize(losss)$/;"	v
 trimap_image_path	Generate.py	/^trimap_image_path = path + 'trimap_training_lowres\/Trimap1'$/;"	v
 unzip	download.py	/^def unzip(filename):$/;"	f
 url	download.py	/^url = ['http:\/\/www.alphamatting.com\/datasets\/zip\/gt_training_lowres.zip',$/;"	v
+v1	test.py	/^    v1 = graph.get_tensor_by_name('Outer\/fc13\/x:0')$/;"	v
+v1	train.py	/^        v1 = graph.get_tensor_by_name('x:0')$/;"	v
 w	tool_show_size.py	/^    w = tools.weight([3,3,3,16], is_uniform=True)$/;"	v
 w	tool_variable_name.py	/^    w = tf.get_variable(name='weights',$/;"	v
 w2	tool_show_size.py	/^    w2 = tools.weight([3,3,16,32], is_uniform=True)$/;"	v
 weight	tools.py	/^def weight(kernel_shape, is_uniform = True):$/;"	f
-width	Generate.py	/^width = 10$/;"	v
+width	Generate.py	/^width = 20$/;"	v
 width	train.py	/^width  = Generate.width$/;"	v
-writer	train.py	/^    writer = tf.summary.FileWriter('.\/train_3_30', sess.graph)$/;"	v
+writer	train.py	/^        writer = tf.summary.FileWriter('.\/train_3_44', sess.graph)$/;"	v
 x	tool_show_size.py	/^x = tf.reshape(cat, [1, 360, 300, 3]) #[1, 360, 300, 3]$/;"	v
 x	train.py	/^    x = train()$/;"	v
 x_BN	tool_show_size.py	/^    x_BN = tools.batch_norm(x_pool2)$/;"	v
