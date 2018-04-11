@@ -70,10 +70,11 @@ with tf.name_scope('optimizer'):
     train_op = optimizer.minimize(losss)
 
 saver = tf.train.Saver()
-config = tf.ConfigProto()
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
+config = tf.ConfigProto(gpu_options=gpu_options)
 
 if is_train:
-    with tf.Session() as sess:
+    with tf.Session(config=config) as sess:
         init = tf.global_variables_initializer()
         merged = tf.summary.merge_all()
         writer = tf.summary.FileWriter('./train_3_44', sess.graph)
@@ -93,7 +94,7 @@ if is_train:
                 learning_rate *= 0.985
         saver.save(sess, saver_file)
 else:
-    with tf.Session() as sess:
+    with tf.Session(config=config) as sess:
         # restore the parameters with path
         saver.restore(sess, tf.train.latest_checkpoint(saver_path))
         batch = Generate.next(batch_size)
