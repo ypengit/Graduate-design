@@ -9,7 +9,7 @@ learning_rate = 0.00001
 global_step = 10
 saver_path = "/tmp/deep_matting/model_save/"
 saver_file = saver_path + "model"
-batch_size = 128
+batch_size = 16
 outername = ['F/','B/','I/']
 width  = Generate.width
 height = Generate.height
@@ -22,7 +22,7 @@ alpha_diff = tf.placeholder(tf.float32, [None, 1])
 
 def loss(x):
     with tf.name_scope('loss') as scope:
-        loss = tf.reduce_mean(tf.abs(x-alpha_diff))
+        loss = tf.reduce_mean(tf.abs(tf.subtract(x,alpha_diff)), name="loss")
         tf.summary.scalar(scope+'/loss', loss)
         tf.summary.histogram(scope+'/loss', loss)
         return loss
@@ -39,7 +39,7 @@ def train():
 
     x = tf.concat([x1, x2, x3], 1)
 
-    x = VGG.VGG16N('v', tf.reshape(x, [-1,32,32,3]) , False)
+    x = VGG.VGG16N('v', tf.reshape(x, [-1,32,32,3]) , True)
 
     tools.FC_layer('Outer/','fc9', x, out_nodes=4096)
     # with tf.name_scope('batch_norm3'):
@@ -80,6 +80,8 @@ if is_train:
         writer = tf.summary.FileWriter('./train_3_44', sess.graph)
         sess.run(init)
         tools.load_with_skip('v', '/tmp/deep_matting/vgg16.npy', sess, ['fc6', 'fc7', 'fc5', 'fc8'])
+        for v in [n.name for n in tf.get_default_graph().as_graph_def().node]:
+            print v
         for idx in range(10000):
             batch = Generate.next(batch_size)
             F_train = np.array([x['F'] for x in batch])
@@ -88,9 +90,13 @@ if is_train:
             alpha_diff_target = np.array([x['alpha_diff'] for x in batch]).reshape([-1, 1])
             # print 'the idx is %05d'% idx, 'before',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
             summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-            for v in zip(alpha_diff, tf.get_default_graph().get_tensor_by_name("optimizer/loss/loss:0")):
-                print v
-            # print 'the idx is %05d'% idx, 'after ',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
+            print alpha_diff_target
+            print sess.run(tf.get_default_graph().get_tensor_by_name("optimizer/Outer/fc13/x:0"),
+                feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
+            for v in (zip(alpha_diff_target, sess.run(tf.get_default_graph().get_tensor_by_name("optimizer/Outer/fc13/x:0"),
+                feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}))):
+                print("%-.20f,%-.20f" % (v[0][0] , v[1][0])) 
+            print 'the idx is %05d'% idx, 'after ',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
             writer.add_summary(summary, idx)
             if idx % 1000 == 0:
                 learning_rate *= 0.985
