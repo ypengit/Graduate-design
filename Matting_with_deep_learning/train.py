@@ -13,7 +13,7 @@ batch_size = 128
 outername = ['F/','B/','I/']
 width  = Generate.width
 height = Generate.height
-is_train = False
+is_train = True
 
 F = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])
 B = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])
@@ -38,7 +38,7 @@ def train():
     # x3 = VGG.VGG16N('x', I)
 
     x = tf.concat([x1, x2, x3], 1)
-  
+
     x = VGG.VGG16N('v', tf.reshape(x, [-1,32,32,3]) , False)
 
     tools.FC_layer('Outer/','fc9', x, out_nodes=4096)
@@ -70,6 +70,7 @@ with tf.name_scope('optimizer'):
     train_op = optimizer.minimize(losss)
 
 saver = tf.train.Saver()
+config = tf.ConfigProto()
 
 if is_train:
     with tf.Session() as sess:
@@ -78,7 +79,7 @@ if is_train:
         writer = tf.summary.FileWriter('./train_3_44', sess.graph)
         sess.run(init)
         tools.load_with_skip('v', '/tmp/deep_matting/vgg16.npy', sess, ['fc6', 'fc7', 'fc5', 'fc8'])
-        for idx in range(1):
+        for idx in range(1000):
             batch = Generate.next(batch_size)
             F_train = np.array([x['F'] for x in batch])
             B_train = np.array([x['B'] for x in batch])
@@ -92,8 +93,8 @@ if is_train:
                 learning_rate *= 0.985
         saver.save(sess, saver_file)
 else:
-    # load the graph !
     with tf.Session() as sess:
+        # restore the parameters with path
         saver.restore(sess, tf.train.latest_checkpoint(saver_path))
         batch = Generate.next(batch_size)
         F_train = np.array([x['F'] for x in batch])
