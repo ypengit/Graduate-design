@@ -86,9 +86,11 @@ if is_train:
             B_train = np.array([x['B'] for x in batch])
             I_train = np.array([x['I'] for x in batch])
             alpha_diff_target = np.array([x['alpha_diff'] for x in batch]).reshape([-1, 1])
-            print 'the idx is %05d'% idx, 'before',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
+            # print 'the idx is %05d'% idx, 'before',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
             summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-            print 'the idx is %05d'% idx, 'after ',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
+            for v in zip(alpha_diff, tf.get_default_graph().get_tensor_by_name("optimizer/loss/loss:0")):
+                print v
+            # print 'the idx is %05d'% idx, 'after ',sess.run(losss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
             writer.add_summary(summary, idx)
             if idx % 1000 == 0:
                 learning_rate *= 0.985
@@ -102,7 +104,7 @@ else:
         B_train = np.array([x['B'] for x in batch])
         I_train = np.array([x['I'] for x in batch])
         alpha_diff_target = np.array([x['alpha_diff'] for x in batch]).reshape([-1, 1])
-        for v in [n.name for n in tf.get_default_graph().as_graph_def().node]:
-            print v
-        # print(sess.run(tf.get_default_graph().get_tensor_by_name("optimizer/loss/loss:0"), feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}))
+        # for v in [n.name for n in tf.get_default_graph().as_graph_def().node]:
+        #     print v
+        print(sess.run(tf.get_default_graph().get_tensor_by_name("optimizer/loss/loss:0"), feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}))
         print(sess.run(tf.get_default_graph().get_tensor_by_name("optimizer/Outer/fc13/x:0"), feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}))
