@@ -13,7 +13,7 @@ batch_size = 128
 outername = ['F/','B/','I/']
 width  = Generate.width
 height = Generate.height
-is_train = True
+is_train = False
 
 F = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])
 B = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])
@@ -22,7 +22,7 @@ alpha_diff = tf.placeholder(tf.float32, [None, 1])
 
 def loss(x):
     with tf.name_scope('loss') as scope:
-        loss = tf.reduce_mean(tf.abs(x-alpha_diff), name='loss')
+        loss = tf.reduce_mean(tf.abs(x-alpha_diff))
         tf.summary.scalar(scope+'/loss', loss)
         tf.summary.histogram(scope+'/loss', loss)
         return loss
@@ -70,7 +70,7 @@ with tf.name_scope('optimizer'):
     train_op = optimizer.minimize(losss)
 
 saver = tf.train.Saver()
-gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.1)
 config = tf.ConfigProto(gpu_options=gpu_options)
 
 if is_train:
@@ -102,4 +102,7 @@ else:
         B_train = np.array([x['B'] for x in batch])
         I_train = np.array([x['I'] for x in batch])
         alpha_diff_target = np.array([x['alpha_diff'] for x in batch]).reshape([-1, 1])
+        for v in [n.name for n in tf.get_default_graph().as_graph_def().node]:
+            print v
+        # print(sess.run(tf.get_default_graph().get_tensor_by_name("optimizer/loss/loss:0"), feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}))
         print(sess.run(tf.get_default_graph().get_tensor_by_name("optimizer/Outer/fc13/x:0"), feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}))
