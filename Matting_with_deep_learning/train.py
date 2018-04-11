@@ -13,7 +13,7 @@ batch_size = 128
 outername = ['F/','B/','I/']
 width  = Generate.width
 height = Generate.height
-is_train = False
+is_train = True
 
 F = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])
 B = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])
@@ -70,7 +70,7 @@ with tf.name_scope('optimizer'):
     train_op = optimizer.minimize(losss)
 
 saver = tf.train.Saver()
-gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.1)
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
 config = tf.ConfigProto(gpu_options=gpu_options)
 
 if is_train:
@@ -80,7 +80,7 @@ if is_train:
         writer = tf.summary.FileWriter('./train_3_44', sess.graph)
         sess.run(init)
         tools.load_with_skip('v', '/tmp/deep_matting/vgg16.npy', sess, ['fc6', 'fc7', 'fc5', 'fc8'])
-        for idx in range(1000):
+        for idx in range(10000):
             batch = Generate.next(batch_size)
             F_train = np.array([x['F'] for x in batch])
             B_train = np.array([x['B'] for x in batch])
