@@ -94,7 +94,7 @@ def generate():
     # calculate the difference between real_alpha and cal_alpha
     realalpha = real_alpha(index, data_pics['pos_I'])
     calalpha  = cal_alpha(F, B, I)
-    data_pics['alpha_diff'] = realalpha - calalpha
+    data_pics['alpha_diff'] = abs(realalpha - calalpha)
     return data_pics
 
 def next(n):

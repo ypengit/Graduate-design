@@ -3,7 +3,7 @@ import numpy as np
 
 
 #%%
-def conv(outername, layer_name, x, out_channels, kernel_size=[3,3], stride=[1,1,1,1], is_pretrain=True):
+def conv(layer_name, x, out_channels, kernel_size=[3,3], stride=[1,1,1,1], is_pretrain=True):
     '''Convolution op wrapper, use RELU activation after convolution
     Args:
         layer_name: e.g. conv1, pool1...
@@ -19,20 +19,19 @@ def conv(outername, layer_name, x, out_channels, kernel_size=[3,3], stride=[1,1,
     '''
 
     in_channels = x.get_shape()[-1]
-    with tf.variable_scope(outername):
-        with tf.variable_scope(layer_name):
-            w = tf.get_variable(name='weights',
-                                trainable=is_pretrain,
-                                shape=[kernel_size[0], kernel_size[1], in_channels, out_channels],
-                                initializer=tf.contrib.layers.xavier_initializer()) # default is uniform distribution initialization
-            b = tf.get_variable(name='biases',
-                                trainable=is_pretrain,
-                                shape=[out_channels],
-                                initializer=tf.constant_initializer(0.0))
-            x = tf.nn.conv2d(x, w, stride, padding='SAME', name='conv')
-            x = tf.nn.bias_add(x, b, name='bias_add')
-            x = tf.nn.relu(x, name='relu')
-            return x
+    with tf.variable_scope(layer_name):
+        w = tf.get_variable(name='weights',
+                            trainable=is_pretrain,
+                            shape=[kernel_size[0], kernel_size[1], in_channels, out_channels],
+                            initializer=tf.contrib.layers.xavier_initializer()) # default is uniform distribution initialization
+        b = tf.get_variable(name='biases',
+                            trainable=is_pretrain,
+                            shape=[out_channels],
+                            initializer=tf.constant_initializer(0.0))
+        x = tf.nn.conv2d(x, w, stride, padding='SAME', name='conv')
+        x = tf.nn.bias_add(x, b, name='bias_add')
+        x = tf.nn.relu(x, name='relu')
+        return x
 
 #%%
 def pool(layer_name, x, kernel=[1,2,2,1], stride=[1,2,2,1], is_max_pool=True):
@@ -67,7 +66,7 @@ def batch_norm(x):
     return x
 
 #%%
-def FC_layer(outername, layer_name, x, out_nodes, name = None):
+def FC_layer(layer_name, x, out_nodes, name = None):
     '''Wrapper for fully connected layers with RELU activation as default
     Args:
         layer_name: e.g. 'FC1', 'FC2'
@@ -80,7 +79,7 @@ def FC_layer(outername, layer_name, x, out_nodes, name = None):
     else:
         size = shape[-1].value
 
-    with tf.variable_scope(outername + layer_name):
+    with tf.variable_scope(layer_name):
         w = tf.get_variable('weights',
                             shape=[size, out_nodes],
                             initializer=tf.contrib.layers.xavier_initializer())
@@ -91,7 +90,8 @@ def FC_layer(outername, layer_name, x, out_nodes, name = None):
         
         x = tf.nn.bias_add(tf.matmul(flat_x, w), b)
         if name != None:
-            x = tf.subtract(tf.nn.relu(x, name=name),4)
+            x = tf.nn.relu(x, name=name)
+            # x = tf.subtract(tf.multiply(tf.nn.sigmoid(x, name=name), 8),4)
         else:
             x = tf.nn.relu(x)
         return x
@@ -178,14 +178,13 @@ def test_load():
 
     
 #%%                
-def load_with_skip(outername, data_path, session, skip_layer):
+def load_with_skip(data_path, session, skip_layer):
     data_dict = np.load(data_path, encoding='latin1').item()
     for key in data_dict:
         if key not in skip_layer:
-            with tf.variable_scope(outername, reuse=True):
-                with tf.variable_scope(key, reuse=True):
-                    for subkey, data in zip(('weights', 'biases'), data_dict[key]):
-                        session.run(tf.get_variable(subkey).assign(data))
+            with tf.variable_scope(key, reuse=True):
+                for subkey, data in zip(('weights', 'biases'), data_dict[key]):
+                    session.run(tf.get_variable(subkey).assign(data))
 
    
 #%%
@@ -248,13 +247,3 @@ def bias(bias_shape):
     return b
 
 #%%
-
-
-
-
-
-
-
-
-
-    
