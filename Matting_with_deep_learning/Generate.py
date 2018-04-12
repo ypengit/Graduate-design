@@ -60,13 +60,25 @@ def real_alpha(index, pos):
 
 
 def cal_alpha(F, B, I):
-    alpha = sum((I-B)*(F-B)) / (sum(F-B)**2 + 0.00001)
-    if alpha > 1:
-        return 1
-    elif alpha < 0:
-        return 0
-    else:
-        return alpha
+    alpha = sum((I-B)*(F-B)) / (sum(F-B)**2 + 0.0001)
+    return alpha
+
+
+
+
+
+
+# def cal_alpha(F, B, I):
+#     alpha = sum((I-B)*(F-B)) / (sum(F-B)**2 + 0.00001)
+#     if alpha > 1:
+#         return 1
+#     elif alpha < 0:
+#         return 0
+#     else:
+#         return alpha
+
+
+
 
 def generate():
     data_pics = {}

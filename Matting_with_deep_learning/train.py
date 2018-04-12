@@ -75,26 +75,29 @@ if is_train:
     with tf.Session(config=config) as sess:
         init = tf.global_variables_initializer()
         merged = tf.summary.merge_all()
-        writer = tf.summary.FileWriter('./train_3_44', sess.graph)
+        writer = tf.summary.FileWriter('./train_log/', sess.graph)
         sess.run(init)
         for v in [n.name for n in tf.get_default_graph().as_graph_def().node]:
             print v
         tools.load_with_skip('/tmp/deep_matting/vgg16.npy', sess, ['fc6', 'fc7', 'fc5', 'fc8'])
-        for idx in range(10000):
+        for idx in range(100000):
             batch = Generate.next(batch_size)
             F_train = np.array([x['F'] for x in batch])
             B_train = np.array([x['B'] for x in batch])
             I_train = np.array([x['I'] for x in batch])
             alpha_diff_target = np.array([x['alpha_diff'] for x in batch]).reshape([-1, 1])
-            print 'the idx is %05d'% idx, 'before',sess.run(loss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-            for v in (zip(alpha_diff_target, sess.run(tf.get_default_graph().get_tensor_by_name("fc13/x:0"),
-                feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}))):
-                print("%-.20f\t%-.20f\t%-.20f" % (v[0][0] , v[1][0], abs(v[0][0] - v[1][0]))) 
             summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-            print 'the idx is %05d'% idx, 'after ',pow(sess.run(loss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}), 0.5)
+            # print 'the idx is %05d'% idx, 'after ',pow(sess.run(loss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}), 0.5)
             writer.add_summary(summary, idx)
             if idx % 1000 == 0:
                 learning_rate *= 0.985
+
+
+            if idx % 200 == 0:
+                print 'the idx is %05d'% idx, 'before',sess.run(loss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
+                for v in (zip(alpha_diff_target, sess.run(tf.get_default_graph().get_tensor_by_name("fc13/x:0"),
+                    feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}))):
+                    print("%-.20f\t%-.20f\t%-.20f" % (v[0][0] , v[1][0], abs(v[0][0] - v[1][0]))) 
         saver.save(sess, saver_file)
 else:
     with tf.Session(config=config) as sess:
