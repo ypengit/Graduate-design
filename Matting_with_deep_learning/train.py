@@ -94,13 +94,6 @@ if is_train:
             print sess.run(tf.get_default_graph().get_tensor_by_name("fc13/x:0"),
                 feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
             summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-            summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-            summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-            summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-            summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-            summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-            summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-            summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
             print 'the idx is %05d'% idx, 'after ',sess.run(loss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
             writer.add_summary(summary, idx)
             if idx % 1000 == 0:
