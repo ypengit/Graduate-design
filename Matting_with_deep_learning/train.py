@@ -5,7 +5,7 @@ import tools
 import tensorflow as tf
 
 
-learning_rate = 0.01
+learning_rate = 0.0001
 global_step = 10
 saver_path = "/tmp/deep_matting/model_save/"
 saver_file = saver_path + "model"
@@ -38,23 +38,23 @@ x = tf.concat([x1, x2, x3], 1)
 
 x = VGG.VGG16N(tf.reshape(x, [-1,32,32,3]) , True)
 
-tools.FC_layer('fc9', x, out_nodes=4096)
-with tf.name_scope('batch_norm3'):
-    x = tools.batch_norm(x)           
+x = tools.FC_layer('fc9', x, out_nodes=4096)
+# with tf.name_scope('batch_norm3'):
+#     x = tools.batch_norm(x)           
 
-tools.FC_layer('fc10', x, out_nodes=4096)
-with tf.name_scope('batch_norm4'):
-    x = tools.batch_norm(x)           
+x = tools.FC_layer('fc10', x, out_nodes=4096)
+# with tf.name_scope('batch_norm4'):
+#     x = tools.batch_norm(x)           
 
-tools.FC_layer('fc11', x, out_nodes=1024)
-with tf.name_scope('batch_norm5'):
-    x = tools.batch_norm(x)           
+x = tools.FC_layer('fc11', x, out_nodes=1024)
+# with tf.name_scope('batch_norm5'):
+#     x = tools.batch_norm(x)           
 
-tools.FC_layer('fc12', x, out_nodes=64)
-with tf.name_scope('batch_norm6'):
-    x = tools.batch_norm(x)           
+x = tools.FC_layer('fc12', x, out_nodes=64)
+# with tf.name_scope('batch_norm6'):
+#     x = tools.batch_norm(x)           
 
-tools.FC_layer('fc13', x, out_nodes=1, name="x")
+x = tools.FC_layer('fc13', x, out_nodes=1, name="x")
 loss = tf.reduce_mean(tf.abs(tf.subtract(x,alpha_diff)), name="loss")
 tf.summary.scalar('loss', loss)
 
@@ -89,12 +89,9 @@ if is_train:
             print 'the idx is %05d'% idx, 'before',sess.run(loss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
             for v in (zip(alpha_diff_target, sess.run(tf.get_default_graph().get_tensor_by_name("fc13/x:0"),
                 feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}))):
-                print("%-.20f\t%-.20f" % (v[0][0] , v[1][0])) 
-            print alpha_diff_target
-            print sess.run(tf.get_default_graph().get_tensor_by_name("fc13/x:0"),
-                feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
+                print("%-.20f\t%-.20f\t%-.20f" % (v[0][0] , v[1][0], abs(v[0][0] - v[1][0]))) 
             summary, _ = sess.run([merged, train_op], feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
-            print 'the idx is %05d'% idx, 'after ',sess.run(loss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})
+            print 'the idx is %05d'% idx, 'after ',pow(sess.run(loss, feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}), 0.5)
             writer.add_summary(summary, idx)
             if idx % 1000 == 0:
                 learning_rate *= 0.985
