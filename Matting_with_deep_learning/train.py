@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import VGG
 import Generate
 import numpy as np
@@ -13,7 +15,7 @@ batch_size = 16
 outername = ['F/','B/','I/']
 width  = Generate.width
 height = Generate.height
-is_train = True
+is_train = False
 
 F = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])
 B = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])
@@ -110,5 +112,7 @@ else:
         alpha_diff_target = np.array([x['alpha_diff'] for x in batch]).reshape([-1, 1])
         # for v in [n.name for n in tf.get_default_graph().as_graph_def().node]:
         #     print v
-        print(sess.run(tf.get_default_graph().get_tensor_by_name("loss/loss:0"), feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}))
+        for v in [n.name for n in tf.get_default_graph().as_graph_def().node]:
+            print v
+        print(sess.run(tf.get_default_graph().get_tensor_by_name("loss:0"), feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}))
         print(sess.run(tf.get_default_graph().get_tensor_by_name("fc13/x:0"), feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}))
