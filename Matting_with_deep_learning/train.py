@@ -11,11 +11,11 @@ learning_rate = 0.0001
 global_step = 10
 saver_path = "/tmp/deep_matting/model_save/"
 saver_file = saver_path + "model"
-batch_size = 16
+batch_size = 32 
 outername = ['F/','B/','I/']
 width  = Generate.width
 height = Generate.height
-is_train = False
+is_train = True
 
 F = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])
 B = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])
@@ -57,7 +57,7 @@ x = tools.FC_layer('fc12', x, out_nodes=64)
 #     x = tools.batch_norm(x)           
 
 x = tools.FC_layer('fc13', x, out_nodes=1, name="x")
-loss = tf.reduce_mean(tf.abs(tf.subtract(x,alpha_diff)), name="loss")
+loss = tf.reduce_mean(tf.pow(tf.abs(tf.subtract(x,alpha_diff)), 2), name="loss")
 tf.summary.scalar('loss', loss)
 
 # Define the optimizer !
@@ -82,7 +82,7 @@ if is_train:
         for v in [n.name for n in tf.get_default_graph().as_graph_def().node]:
             print v
         tools.load_with_skip('/tmp/deep_matting/vgg16.npy', sess, ['fc6', 'fc7', 'fc5', 'fc8'])
-        for idx in range(100000):
+        for idx in range(10000):
             batch = Generate.next(batch_size)
             F_train = np.array([x['F'] for x in batch])
             B_train = np.array([x['B'] for x in batch])

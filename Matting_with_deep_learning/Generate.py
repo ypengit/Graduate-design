@@ -48,6 +48,14 @@ def rand_pos(shape, types, index):
     if(types == 'B'):
         pos['x'], pos['y'] = pos_f(index, [0, 0, 0])
     return pos
+def get_val(index,pos):
+    x = pos['x']
+    y = pos['y']
+    return data['train'][index][x][y]
+
+
+
+
 
 def get_block(index,pos):
     x = pos['x'] + width/2
@@ -60,8 +68,13 @@ def real_alpha(index, pos):
 
 
 def cal_alpha(F, B, I):
-    alpha = sum((I-B)*(F-B)) / (sum(F-B)**2 + 0.0001)
-    return alpha
+    alpha = sum((I-B)*(F-B)) / (sum((F-B)**2) + 0.0001)
+    if alpha > 1:
+        return 1
+    elif alpha < 0:
+        return 0
+    else:
+        return alpha
 
 
 

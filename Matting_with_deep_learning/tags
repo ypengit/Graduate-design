@@ -6,20 +6,28 @@
 !_TAG_PROGRAM_VERSION	5.8	//
 B	train.py	/^B = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])$/;"	v
 BATCH_SIZE	training_and_val.py	/^BATCH_SIZE = 32$/;"	v
+B_test	TestGenerate.py	/^                    B_test = np.array([data_pics['B']])$/;"	v
 B_train	train.py	/^            B_train = np.array([x['B'] for x in batch])$/;"	v
 B_train	train.py	/^        B_train = np.array([x['B'] for x in batch])$/;"	v
+B_val	TestGenerate.py	/^                    B_val = Generate.get_val(-1, data_pics['pos_B'])$/;"	v
 F	train.py	/^F = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])$/;"	v
 FC_layer	tools.py	/^def FC_layer(layer_name, x, out_nodes, name = None):$/;"	f
+F_test	TestGenerate.py	/^                    F_test = np.array([data_pics['F']])$/;"	v
 F_train	train.py	/^            F_train = np.array([x['F'] for x in batch])$/;"	v
 F_train	train.py	/^        F_train = np.array([x['F'] for x in batch])$/;"	v
+F_val	TestGenerate.py	/^                    F_val = Generate.get_val(-1, data_pics['pos_F'])$/;"	v
+Generate	TestGenerate.py	/^import Generate$/;"	i
 Generate	test.py	/^import Generate$/;"	i
 Generate	train.py	/^import Generate$/;"	i
 I	train.py	/^I = tf.placeholder(tf.float32,[None, width + 1, height + 1, 3])$/;"	v
 IMG_H	training_and_val.py	/^IMG_H = 32$/;"	v
 IMG_W	training_and_val.py	/^IMG_W = 32$/;"	v
 IS_PRETRAIN	training_and_val.py	/^IS_PRETRAIN = True$/;"	v
+I_test	TestGenerate.py	/^                    I_test = np.array([data_pics['I']])$/;"	v
+I_test	TestGenerate.py	/^                I_test = [data_pics['I']]$/;"	v
 I_train	train.py	/^            I_train = np.array([x['I'] for x in batch])$/;"	v
 I_train	train.py	/^        I_train = np.array([x['I'] for x in batch])$/;"	v
+I_val	TestGenerate.py	/^                    I_val = Generate.get_val(-1, data_pics['pos_I'])$/;"	v
 Image	tool_show_feature_map.py	/^from PIL import Image$/;"	i
 MAX_STEP	training_and_val.py	/^MAX_STEP = 15000   # it took me about one hour to complete the training.$/;"	v
 N_CLASSES	training_and_val.py	/^N_CLASSES = 10$/;"	v
@@ -45,23 +53,32 @@ batch_size	test.py	/^batch_size = 128$/;"	v
 batch_size	train.py	/^batch_size = 16$/;"	v
 bias	tools.py	/^def bias(bias_shape):$/;"	f
 cal_alpha	Generate.py	/^def cal_alpha(F, B, I):$/;"	f
+cal_alpha	TestGenerate.py	/^                    cal_alpha = Generate.cal_alpha(F_val, B_val, I_val)$/;"	v
+cal_alpha_diff_pre	TestGenerate.py	/^                cal_alpha_diff_pre = 1.0$/;"	v
+cal_dividual_alpha_diff	TestGenerate.py	/^                    cal_dividual_alpha_diff = sum((I_val - B_val)\/(F_val - B_val + 0.001)\/255.0)\/3$/;"	v
+cal_loss	TestGenerate.py	/^                    cal_loss = cal_dividual_alpha_diff + cal_alpha_diff$/;"	v
 cat	tool_show_size.py	/^cat = plt.imread('cat.jpg') #unit8$/;"	v
 cat	tool_show_size.py	/^cat = tf.cast(cat, tf.float32) #[360, 300, 3]$/;"	v
+config	TestGenerate.py	/^config = tf.ConfigProto(gpu_options=gpu_options)$/;"	v
 config	train.py	/^config = tf.ConfigProto(gpu_options=gpu_options)$/;"	v
 conv	tools.py	/^def conv(layer_name, x, out_channels, kernel_size=[3,3], stride=[1,1,1,1], is_pretrain=True):$/;"	f
 cv2	Generate.py	/^import cv2$/;"	i
+cv2	TestGenerate.py	/^import cv2$/;"	i
 data	Generate.py	/^data = {}$/;"	v
+data_pics	TestGenerate.py	/^                data_pics = {}$/;"	v
+dividual_alpha_diff_pre	TestGenerate.py	/^                dividual_alpha_diff_pre = 1.0$/;"	v
 download	download.py	/^def download(url, filename, path=path):$/;"	f
 evaluate	training_and_val.py	/^def evaluate():$/;"	f
-feed_dict	train.py	/^                feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target})$/;"	v
-feed_dict	train.py	/^                feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}))):$/;"	v
+feed_dict	train.py	/^                    feed_dict={F:F_train, B:B_train, I:I_train, alpha_diff:alpha_diff_target}))):$/;"	v
 file_content	Generate.py	/^def file_content(filename):$/;"	f
 file_names	Generate.py	/^def file_names(file_dir):$/;"	f
 files	Generate.py	/^def files(file_dir):$/;"	f
 files	download.py	/^files = ['gt_training_lowres.zip', 'trimap_training_lowres.zip', 'input_training_lowres.zip']$/;"	v
 generate	Generate.py	/^def generate():$/;"	f
 get_block	Generate.py	/^def get_block(index,pos):$/;"	f
+get_val	Generate.py	/^def get_val(index,pos):$/;"	f
 global_step	train.py	/^global_step = 10$/;"	v
+gpu_options	TestGenerate.py	/^gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)$/;"	v
 gpu_options	train.py	/^gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)$/;"	v
 graph	test.py	/^    graph = tf.get_default_graph()$/;"	v
 height	Generate.py	/^height = 20$/;"	v
@@ -72,13 +89,15 @@ initializer	tool_variable_name.py	/^                        initializer=tf.const
 initializer	tool_variable_name.py	/^                        initializer=tf.contrib.layers.xavier_initializer())   $/;"	v
 initializer	tool_variable_name.py	/^                        initializer=tf.contrib.layers.xavier_initializer(), trainable=False)    $/;"	v
 input_data	training_and_val.py	/^import input_data$/;"	i
-is_train	train.py	/^is_train = True$/;"	v
+is_train	train.py	/^is_train = False$/;"	v
 learning_rate	train.py	/^learning_rate = 0.0001$/;"	v
 learning_rate	training_and_val.py	/^learning_rate = 0.01$/;"	v
 load	tools.py	/^def load(data_path, session):$/;"	f
 load_with_skip	tools.py	/^def load_with_skip(data_path, session, skip_layer):$/;"	f
+loss	TestGenerate.py	/^                        loss = cal_alpha_diff_pre$/;"	v
+loss	TestGenerate.py	/^                loss = cal_alpha_diff_pre + dividual_alpha_diff_pre$/;"	v
 loss	tools.py	/^def loss(logits, labels):$/;"	f
-loss	train.py	/^loss = tf.reduce_mean(tf.pow(tf.abs(tf.subtract(x,alpha_diff)), 2), name="loss")$/;"	v
+loss	train.py	/^loss = tf.reduce_mean(tf.abs(tf.subtract(x,alpha_diff)), name="loss")$/;"	v
 main	download.py	/^def main():$/;"	f
 math	training_and_val.py	/^import math$/;"	i
 matplotlib	tool_show_feature_map.py	/^import matplotlib.pyplot as plt$/;"	i
@@ -86,6 +105,7 @@ matplotlib	tool_show_size.py	/^import matplotlib.pyplot as plt$/;"	i
 merged	train.py	/^        merged = tf.summary.merge_all()$/;"	v
 next	Generate.py	/^def next(n):$/;"	f
 np	Generate.py	/^import numpy as np$/;"	i
+np	TestGenerate.py	/^import numpy as np$/;"	i
 np	input_data.py	/^import numpy as np$/;"	i
 np	tool_show_feature_map.py	/^import numpy as np$/;"	i
 np	tools.py	/^import numpy as np$/;"	i
@@ -108,13 +128,17 @@ plt	tool_show_feature_map.py	/^import matplotlib.pyplot as plt$/;"	i
 plt	tool_show_size.py	/^import matplotlib.pyplot as plt$/;"	i
 pool	tools.py	/^def pool(layer_name, x, kernel=[1,2,2,1], stride=[1,2,2,1], is_max_pool=True):$/;"	f
 pos_f	Generate.py	/^def pos_f(index, val):$/;"	f
+pre_pos	TestGenerate.py	/^                pre_pos = {}$/;"	v
 print_all_variables	tools.py	/^def print_all_variables(train_only=True):$/;"	f
 rand_pos	Generate.py	/^def rand_pos(shape, types, index):$/;"	f
 random	Generate.py	/^import random$/;"	i
 read_cifar10	input_data.py	/^def read_cifar10(data_dir, is_train, batch_size, shuffle):$/;"	f
 real_alpha	Generate.py	/^def real_alpha(index, pos):$/;"	f
+res	TestGenerate.py	/^res = np.zeros([width, height, 1])$/;"	v
+saver	TestGenerate.py	/^    saver = tf.train.import_meta_graph(saver_file + ".meta")$/;"	v
 saver	test.py	/^saver = tf.train.import_meta_graph(saver_file) $/;"	v
 saver	train.py	/^saver = tf.train.Saver()$/;"	v
+saver_file	TestGenerate.py	/^saver_file = "\/tmp\/deep_matting\/model_save\/model"$/;"	v
 saver_file	test.py	/^saver_file = saver_path + "model" + ".meta"$/;"	v
 saver_file	train.py	/^saver_file = saver_path + "model"$/;"	v
 saver_path	test.py	/^saver_path = ".\/model_save\/"$/;"	v
@@ -125,6 +149,7 @@ shape	tool_variable_name.py	/^                        shape=[3,3,3,16],$/;"	v
 show_feature_map	tool_show_feature_map.py	/^def show_feature_map():$/;"	f
 show_rich_feature	tool_show_feature_map.py	/^def show_rich_feature():$/;"	f
 test_load	tools.py	/^def test_load():$/;"	f
+tf	TestGenerate.py	/^import tensorflow as tf$/;"	i
 tf	VGG.bak.py	/^import tensorflow as tf$/;"	i
 tf	VGG.py	/^import tensorflow as tf$/;"	i
 tf	input_data.py	/^import tensorflow as tf$/;"	i
@@ -155,11 +180,15 @@ weight	tools.py	/^def weight(kernel_shape, is_uniform = True):$/;"	f
 wget	download.py	/^import wget$/;"	i
 width	Generate.py	/^width = 20$/;"	v
 width	train.py	/^width  = Generate.width$/;"	v
-writer	train.py	/^        writer = tf.summary.FileWriter('.\/train_3_44', sess.graph)$/;"	v
+writer	train.py	/^        writer = tf.summary.FileWriter('.\/train_log\/', sess.graph)$/;"	v
 x	tool_show_size.py	/^x = tf.reshape(cat, [1, 360, 300, 3]) #[1, 360, 300, 3]$/;"	v
-x	train.py	/^    x = tools.batch_norm(x)           $/;"	v
 x	train.py	/^x = VGG.VGG16N(tf.reshape(x, [-1,32,32,3]) , True)$/;"	v
 x	train.py	/^x = tf.concat([x1, x2, x3], 1)$/;"	v
+x	train.py	/^x = tools.FC_layer('fc10', x, out_nodes=4096)$/;"	v
+x	train.py	/^x = tools.FC_layer('fc11', x, out_nodes=1024)$/;"	v
+x	train.py	/^x = tools.FC_layer('fc12', x, out_nodes=64)$/;"	v
+x	train.py	/^x = tools.FC_layer('fc13', x, out_nodes=1, name="x")$/;"	v
+x	train.py	/^x = tools.FC_layer('fc9', x, out_nodes=4096)$/;"	v
 x1	train.py	/^    x1 = tools.FC_layer('fc1',F,out_nodes=1024) $/;"	v
 x2	train.py	/^    x2 = tools.FC_layer('fc1',B,out_nodes=1024)$/;"	v
 x3	train.py	/^    x3 = tools.FC_layer('fc1',I,out_nodes=1024)$/;"	v
