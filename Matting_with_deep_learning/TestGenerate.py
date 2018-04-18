@@ -8,7 +8,7 @@ width, height, _ = Generate.data['train'][-1].shape
 
 res = np.zeros([width, height, 3])
 
-gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.1)
 config = tf.ConfigProto(gpu_options=gpu_options)
 
 saver_file = "/tmp/deep_matting/model_save/model"
@@ -47,15 +47,17 @@ with tf.Session(config=config, graph=tf.get_default_graph()) as sess:
                     B_val = Generate.get_val(-1, data_pics['pos_B'])
                     cal_dividual_alpha_diff = sum((I_val - B_val)/(F_val - B_val + 0.001)/255.0)/3
                     [[cal_alpha_diff]] = sess.run(tf.get_default_graph().get_tensor_by_name("fc13/x:0"), feed_dict={"Placeholder:0":F_test, "Placeholder_1:0":B_test, "Placeholder_2:0":I_test})
-                    cal_loss = cal_dividual_alpha_diff + cal_alpha_diff
+                    cal_loss = abs(cal_dividual_alpha_diff) + abs(cal_alpha_diff)
                     cal_alpha = Generate.cal_alpha(F_val, B_val, I_val)
                     # print i,cal_alpha,cal_dividual_alpha_diff,cal_alpha_diff
                     if(cal_loss < loss):
-                        loss = cal_alpha_diff_pre
+                        loss = cal_loss
                         res[x][y][0] = cal_alpha
                         res[x][y][1] = cal_alpha
                         res[x][y][2] = cal_alpha
-                print loss
+                        if(loss < 0.01):
+                            print loss
+                            break
             if(np.equal(Generate.data['trimap'][-1][x][y],
                 np.array([255, 255, 255])).all()):
                 res[x][y] = np.array([1.0, 1.0, 1.0])
@@ -63,6 +65,7 @@ with tf.Session(config=config, graph=tf.get_default_graph()) as sess:
                 np.array([0  , 0  , 0  ])).all()):
                 res[x][y] = np.array([0.0, 0.0, 0.0])
             print("width=%04d,height=%04d,alpha=%.6f" % (x, y,res[x][y][0]))
+res = res * 255
 outfile1 = file("result1.png", "w")
 outfile2 = file("result2.png", "wb")
 np.save(outfile1, res)

@@ -2,6 +2,7 @@ import os
 import numpy as np
 import cv2
 import random
+import glob
 
 path = '/tmp/deep_matting/'
 train_image_path  = path + 'input_training_lowres'
@@ -12,10 +13,8 @@ width = 20
 height = 20
 
 def file_names(file_dir):
-    file_paths = []
-    for root, dirs, files in os.walk(file_dir):
-        for file in files:
-            file_paths.append(root + '/' + file)
+    file_paths = glob.glob(file_dir + "/*.png")
+    file_paths.sort()
     return file_paths
 
 def file_content(filename):

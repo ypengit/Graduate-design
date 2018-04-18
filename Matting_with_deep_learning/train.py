@@ -70,7 +70,7 @@ optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
 train_op = optimizer.minimize(loss)
 
 saver = tf.train.Saver()
-gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.1)
 config = tf.ConfigProto(gpu_options=gpu_options)
 
 if is_train:
@@ -82,7 +82,7 @@ if is_train:
         for v in [n.name for n in tf.get_default_graph().as_graph_def().node]:
             print v
         tools.load_with_skip('/tmp/deep_matting/vgg16.npy', sess, ['fc6', 'fc7', 'fc5', 'fc8'])
-        for idx in range(10000):
+        for idx in range(100000):
             batch = Generate.next(batch_size)
             F_train = np.array([x['F'] for x in batch])
             B_train = np.array([x['B'] for x in batch])
