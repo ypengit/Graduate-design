@@ -91,7 +91,7 @@ def FC_layer(layer_name, x, out_nodes, name = None):
         x = tf.nn.bias_add(tf.matmul(flat_x, w), b)
         if name != None:
             # x = tf.subtract(tf.nn.relu(x), 4, name=name)
-            x = tf.subtract(tf.multiply(tf.nn.sigmoid(x), 4),2, name=name)
+            x = tf.subtract(tf.multiply(tf.nn.sigmoid(x),8),4,name=name)
         else:
             x = tf.nn.relu(x)
         return x

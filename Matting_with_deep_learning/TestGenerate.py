@@ -55,7 +55,7 @@ with tf.Session(config=config, graph=tf.get_default_graph()) as sess:
                         res[x][y][0] = cal_alpha
                         res[x][y][1] = cal_alpha
                         res[x][y][2] = cal_alpha
-                        if(loss < 0.01):
+                        if(loss < 0.02):
                             print loss
                             break
             if(np.equal(Generate.data['trimap'][-1][x][y],
@@ -66,8 +66,8 @@ with tf.Session(config=config, graph=tf.get_default_graph()) as sess:
                 res[x][y] = np.array([0.0, 0.0, 0.0])
             print("width=%04d,height=%04d,alpha=%.6f" % (x, y,res[x][y][0]))
 res = res * 255
-outfile1 = file("result1.png", "w")
-outfile2 = file("result2.png", "wb")
+outfile1 = file("result3.png", "w")
+outfile2 = file("result4.png", "wb")
 np.save(outfile1, res)
 np.save(outfile2, res)
 outfile1.close()
