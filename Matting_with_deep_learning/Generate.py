@@ -8,8 +8,8 @@ path = '/tmp/deep_matting/'
 train_image_path  = path + 'input_training_lowres'
 trimap_image_path = path + 'trimap_training_lowres/Trimap1'
 alpha_image_path  = path + 'gt_training_lowres'
-width = 2
-height = 2
+width = 30
+height = 30
 def file_names(file_dir):
     file_paths = glob.glob(file_dir + "/*.png")
     file_paths.sort()
