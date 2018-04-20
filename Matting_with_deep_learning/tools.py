@@ -91,7 +91,7 @@ def FC_layer(layer_name, x, out_nodes, name = None):
         x = tf.nn.bias_add(tf.matmul(flat_x, w), b)
         if name != None:
             # x = tf.subtract(tf.nn.relu(x), 4, name=name)
-            x = tf.subtract(tf.multiply(tf.nn.sigmoid(x),8),4,name=name)
+            x = tf.subtract(tf.multiply(tf.nn.sigmoid(x),16),8,name=name)
         else:
             x = tf.nn.relu(x)
         return x
@@ -182,9 +182,11 @@ def load_with_skip(data_path, session, skip_layer):
     data_dict = np.load(data_path, encoding='latin1').item()
     for key in data_dict:
         if key not in skip_layer:
-            with tf.variable_scope(key, reuse=True):
-                for subkey, data in zip(('weights', 'biases'), data_dict[key]):
-                    session.run(tf.get_variable(subkey).assign(data))
+            for i in range(1,4):
+                with tf.variable_scope("x"+str(i)):
+                    with tf.variable_scope(key, reuse=True):
+                        for subkey, data in zip(('weights', 'biases'), data_dict[key]):
+                            session.run(tf.get_variable(subkey).assign(data))
 
    
 #%%

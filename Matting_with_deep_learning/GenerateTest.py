@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 import random
 import glob
-path = '/tmp/deep_matting/'
+path = '/tmp/deep_matting/test/'
 train_image_path  = path + 'input_training_lowres'
 trimap_image_path = path + 'trimap_training_lowres/Trimap1'
 alpha_image_path  = path + 'gt_training_lowres'

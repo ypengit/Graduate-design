@@ -7,8 +7,8 @@ file_pathes = ["/tmp/deep_matting/input_training_lowres/*.png",
         "/tmp/deep_matting/gt_training_lowres/*.png"
         ]
 pic_num = 26
-width = 20
-height = 20
+width = 30
+height = 30
 # data
 dt = np.ndarray(shape=(3,pic_num),dtype=np.ndarray)
 # tensors
