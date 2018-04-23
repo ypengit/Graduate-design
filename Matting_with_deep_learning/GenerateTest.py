@@ -48,14 +48,14 @@ def get_block(index,pos):
     return np.lib.pad(data['train'][index], ((width/2,width/2),(height/2,height/2),(0,0)), 'constant', constant_values=(-255))[x-width/2:x+width/2+1,y-height/2:y+height/2+1]
 def real_alpha(index, pos):
     alpha = data['alpha'][index][pos['x']][pos['y']][0]/255
-    if alpha < 0.000001:
-        return 0
-    return 1.0/(1+(1.0/alpha))
+    return alpha
 
 def cal_alpha(F, B, I):
-    if (F-B<0.000001).all() or (I-B<0.000001).all():
-        return 0.0
-    alpha =  abs(sum((I-B)*(F-B)))/(abs(sum((F-B)**2)) + abs(sum((I-B)*(F-B))))
+    alpha =  sum((I-B)*(F-B))/sum((F-B)**2 + 0.001)
+    if alpha > 1:
+        return 1
+    if alpha < 0:
+        return 0
     return alpha
 def generate():
     data_pics = {}
@@ -84,7 +84,7 @@ def generate():
     data_pics['real_alpha'] = realalpha
     calalpha  = cal_alpha(F, B, I)
     data_pics['cal_alpha'] = calalpha
-    data_pics['alpha_diff'] = realalpha - calalpha
+    data_pics['alpha_diff'] = abs(realalpha - calalpha)
     return data_pics
 def generate1():
     while True:
