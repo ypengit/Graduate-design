@@ -23,6 +23,11 @@ data['train'] = files(train_image_path)
 data['trimap']= files(trimap_image_path)
 data['alpha'] = files(alpha_image_path)
 num = len(data['train'])
+fb = []
+for i in range(len(data['train'])):
+    for x in range(data['train'][i].shape[0]):
+        for y in range(data['train'][i].shape[1]):
+
 def pos_f(index, val):
     while True:
         x = random.randrange(data['trimap'][index].shape[0])
