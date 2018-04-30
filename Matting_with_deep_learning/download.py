@@ -4,10 +4,12 @@ import zipfile
 
 url = ['http://www.alphamatting.com/datasets/zip/gt_training_lowres.zip',
        'http://www.alphamatting.com/datasets/zip/trimap_training_lowres.zip',
-       'http://www.alphamatting.com/datasets/zip/input_training_lowres.zip'
+       'http://www.alphamatting.com/datasets/zip/input_training_lowres.zip',
+       'http://alphamatting.com/datasets/zip/input_lowres.zip',
+       'http://alphamatting.com/datasets/zip/trimap_lowres.zip'
        ]
 path = '/tmp/deep_matting/'
-files = ['gt_training_lowres.zip', 'trimap_training_lowres.zip', 'input_training_lowres.zip']
+files = ['gt_training_lowres.zip', 'trimap_training_lowres.zip', 'input_training_lowres.zip', 'input_lowres.zip', 'trimap_lowres.zip']
 
 def download(url, filename, path=path):
     if not os.path.exists(path):

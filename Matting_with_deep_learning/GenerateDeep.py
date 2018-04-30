@@ -60,23 +60,33 @@ def cal_alpha(F, B, I):
     if alpha < 0:
         return 0
     return alpha
-def generate():
+def generate(n):
     # pick one picture and get the shape
+    count = 0
     while True:
         idx = random.randrange(num)
         h, w, _ = data['train'][idx].shape
         x = random.randrange(w)
         y = random.randrange(h)
         if(x + width < w and y + height < h):
+            if count > n-1:
+                return
             data_pics = {}
             # data_pics['idx'] = idx
             # data_pics['x'] = x
             # data_pics['y'] = y
-            data_pics['rgb'] = data['train'][idx][y:y+height,x:x+width,:]/255.0
-            data_pics['trimap'] = data['trimap'][idx][y:y+height,x:x+width,:]/255.0
-            data_pics['alpha'] = data['alpha'][idx][y:y+height,x:x+width]/255.0
-            yield data_pics
+            data_pics['rgb'] = data['train'][idx][y:y+height,x:x+width,:]
+            data_pics['trimap'] = data['trimap'][idx][y:y+height,x:x+width,:]
+            data_pics['alpha'] = data['alpha'][idx][y:y+height,x:x+width]
+            cv2.imwrite("/disk3/Graduate-design/data/rgb/{:0>6}.png".format(count),data_pics['rgb'])
+            cv2.imwrite("/disk3/Graduate-design/data/trimap/{:0>6}.png".format(count),data_pics['trimap'])
+            cv2.imwrite("/disk3/Graduate-design/data/alpha/{:0>6}.png".format(count),data_pics['alpha'])
+            count+=1
+            if count % 1000 == 0:
+                print count
+
+def main():
+    generate(20000)
 
 if __name__ == "__main__":
-    a = generate()
-    print a.next()['rgb'].shape
+    main()
