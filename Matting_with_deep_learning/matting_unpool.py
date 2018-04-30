@@ -1,53 +1,53 @@
 import tensorflow as tf
 import cv2
 import numpy as np
-from matting import load_path,load_data,load_alphamatting_data,load_validation_data,unpool
 import os
 import pdb
 from scipy import misc
-os.environ['CUDA_VISIBLE_DEVICES']='1'
+os.environ['CUDA_VISIBLE_DEVICES']='0'
 
 image_size = 320
 train_batch_size = 10
-max_epochs = 1000000
-hard_mode = False
 
 #checkpoint file path
 pretrained_model = False
-#pretrained_model = False
-test_dir = './alhpamatting'
-test_outdir = './test_predict'
-#validation_dir = '/data/gezheng/data-matting/new2/validation'
-
-#pretrained_vgg_model_path
-model_path = './vgg16_weights.npz'
-log_dir = 'matting_log'
-
-dataset_alpha = 'train_data/alpha'
-dataset_eps = 'train_data/eps'
-
-
-
-
-image_batch = tf.placeholder(tf.float32, shape=(train_batch_size,image_size,image_size,3))
-GT_matte_batch = tf.placeholder(tf.float32, shape = (train_batch_size,image_size,image_size,1))
-GT_trimap = tf.placeholder(tf.float32, shape = (train_batch_size,image_size,image_size,1))
-training = tf.placeholder(tf.bool)
+is_train = True
 
 en_parameters = []
 pool_parameters = []
 
-b_RGB = tf.identity(image_batch,name = 'b_RGB')
-b_trimap = tf.identity(GT_trimap,name = 'b_trimap')
-b_GTmatte = tf.identity(GT_matte_batch,name = 'b_GTmatte')
 
-b_input = tf.concat([b_RGB,b_trimap],3)
+
+def unpool(pool, ind, ksize=[1, 2, 2, 1], scope='unpool'):
+    with tf.variable_scope(scope):
+        input_shape = pool.get_shape().as_list()
+        output_shape = (input_shape[0], input_shape[1] * ksize[1], input_shape[2] * ksize[2], input_shape[3])
+        flat_input_size = np.prod(input_shape)
+        flat_output_shape = [output_shape[0], output_shape[1] * output_shape[2] * output_shape[3]]
+        pool_ = tf.reshape(pool, [flat_input_size])
+        batch_range = tf.reshape(tf.range(output_shape[0], dtype=ind.dtype), shape=[input_shape[0], 1, 1, 1])
+        b = tf.ones_like(ind) * batch_range
+        b = tf.reshape(b, [flat_input_size, 1])
+        ind_ = tf.reshape(ind, [flat_input_size, 1])
+        ind_ = tf.concat([b, ind_], 1)
+        ret = tf.scatter_nd(ind_, pool_, shape=flat_output_shape)
+        ret = tf.reshape(ret, output_shape)
+        return ret
+
+
+
+rgb    = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,3))
+alpha  = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,1))
+trimap = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,1))
+training = tf.placeholder(tf.bool)
+
+input_concat = tf.cast(tf.concat([rgb,trimap],3),tf.float32)
 
 # conv1_1
 with tf.name_scope('conv1_1') as scope:
     kernel = tf.Variable(tf.truncated_normal([3, 3, 4, 64], dtype=tf.float32,
                                              stddev=1e-1), name='weights')
-    conv = tf.nn.conv2d(b_input, kernel, [1, 1, 1, 1], padding='SAME')
+    conv = tf.nn.conv2d(input_concat, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
                          trainable=True, name='biases')
     out = tf.nn.bias_add(conv, biases)
@@ -297,42 +297,31 @@ with tf.variable_scope('pred_alpha') as scope:
     biases = tf.Variable(tf.constant(0.0, shape=[1], dtype=tf.float32),
                          trainable=True, name='biases')
     out = tf.nn.bias_add(conv, biases)
-    pred_mattes = out
-    pred_mattes = tf.where(tf.equal(tf.cast(b_trimap,tf.int32),255),tf.ones_like(pred_mattes),pred_mattes)
-    pred_mattes = tf.where(tf.equal(tf.cast(b_trimap,tf.int32),0),tf.zeros_like(pred_mattes),pred_mattes)
-    pred_mattes = tf.where(tf.greater(pred_mattes,1),tf.ones_like(pred_mattes),pred_mattes)
-    pred_mattes = tf.where(tf.less(pred_mattes,0),tf.zeros_like(pred_mattes),pred_mattes,name='res')
+    pred_mat = out
+    pred_mat = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat),pred_mat)
+    pred_mat = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat),pred_mat)
+    pred_mat = tf.where(tf.greater(pred_mat,1),tf.ones_like(pred_mat),pred_mat)
+    pred_mat = tf.where(tf.less(pred_mat,0),tf.zeros_like(pred_mat),pred_mat,name='res')
 
 
-pred_mattes_out = tf.reshape(pred_mattes,tf.shape(GT_matte_batch))
+
+alpha_f = tf.divide(tf.cast(alpha,tf.float32),255.0)
 
 
-coun = tf.reduce_sum(tf.where(tf.equal(tf.cast(b_trimap,tf.int32),128*tf.ones_like(b_trimap,tf.int32)),tf.ones_like(b_trimap),tf.zeros_like(b_trimap)))
+cou = tf.cast(tf.reduce_sum(tf.where(tf.equal(trimap,128),tf.ones_like(trimap),tf.zeros_like(trimap))), tf.float32)
+diff = tf.abs(tf.subtract(pred_mat,alpha_f))
+mae = tf.divide(tf.reduce_sum(diff),cou)
+mse = tf.divide(tf.reduce_sum(tf.pow(diff,2.0)),cou)
+sad = tf.divide(tf.reduce_sum(diff),1000.0)
 
-total_loss = tf.reduce_sum(tf.abs(tf.subtract(pred_mattes_out,GT_matte_batch/255.0)))/coun
-sad = tf.reduce_sum(tf.abs(tf.subtract(pred_mattes_out,GT_matte_batch/255.0)))/1000.0
-mse = tf.reduce_sum(tf.pow(tf.abs(tf.subtract(pred_mattes_out,GT_matte_batch/255.0)),2.0))/coun
-
-global_step = tf.Variable(0,trainable=False)
-
-
-train_op = tf.train.AdamOptimizer(learning_rate = 1e-5).minimize(mse,global_step = global_step)
-
-saver = tf.train.Saver(tf.trainable_variables() , max_to_keep = 1)
-
-coord = tf.train.Coordinator()
-summary_op = tf.summary.merge_all()
-summary_writer = tf.summary.FileWriter(log_dir, tf.get_default_graph())
+train_op = tf.train.AdamOptimizer(learning_rate = 1e-5).minimize(mse)
 
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction = 1.0)
 with tf.Session(config=tf.ConfigProto(gpu_options = gpu_options)) as sess:
     sess.run(tf.global_variables_initializer())
-    tf.train.start_queue_runners(coord=coord,sess=sess)
-    batch_num = 0
-    epoch_num = 0
     #initialize all parameters in vgg16
-    if not pretrained_model:
-        weights = np.load(model_path)
+    if is_train:
+        weights = np.load()
         keys = sorted(weights.keys())
         for i, k in enumerate(keys):
             if i == 28:
@@ -349,26 +338,23 @@ with tf.Session(config=tf.ConfigProto(gpu_options = gpu_options)) as sess:
     else:
         print('Restoring pretrained model...')
         saver.restore(sess,tf.train.latest_checkpoint('./model'))
-    sess.graph.finalize()
 
     for idx in range(10000):
-        # pdb.set_trace()
-        batch_RGBs   = np.array([cv2.imread("/disk3/Graduate-design/data/rgb/{:0>6}.png".format(idx*10 + i)) for i in range(10)])
-        batch_alphas = np.array([cv2.imread("/disk3/Graduate-design/data/alpha/{:0>6}.png".format(idx*10 + i)) for i in range(10)])[:,:,:,0:1]
-        batch_trimaps= np.array([cv2.imread("/disk3/Graduate-design/data/trimap/{:0>6}.png".format(idx*10 + i)) for i in range(10)])[:,:,:,0:1]
-        feed = {image_batch:batch_RGBs, GT_matte_batch:batch_alphas,GT_trimap:batch_trimaps,training:True}
-        _,loss,sad_,mse_ = sess.run([train_op,total_loss,sad,mse],feed_dict = feed)
-        print('step is %04d loss is %f, sad is %f, mse is %f' %(idx,loss,sad_,mse_))
+        batch_rgb   = np.array([cv2.imread("/disk3/Graduate-design/data/rgb/{:0>6}.png".format(idx*10 + i)) for i in range(10)])
+        batch_alpha = np.array([cv2.imread("/disk3/Graduate-design/data/alpha/{:0>6}.png".format(idx*10 + i)) for i in range(10)])[:,:,:,0:1]
+        batch_trimap= np.array([cv2.imread("/disk3/Graduate-design/data/trimap/{:0>6}.png".format(idx*10 + i)) for i in range(10)])[:,:,:,0:1]
+        feed = {rgb:batch_rgb, alpha:batch_alpha,trimap:batch_trimap,training:True}
+        _,loss,sad_,mse_ = sess.run([train_op,mae,sad,mse],feed_dict = feed)
+        print('step is %06d loss is %f, sad is %f, mse is %f' %(idx,loss,sad_,mse_))
         if idx % 10 == 0:
             ix = idx / 10
-            rgb=np.array([cv2.imread("/disk3/Graduate-design/test/rgb/{:0>6}.png".format(ix*10 + i)) for i in range(10)])
-            alpha=np.array([cv2.imread("/disk3/Graduate-design/test/alpha/{:0>6}.png".format(ix*10 + i)) for i in range(10)])[:,:,:,0:1]
-            tr=np.array([cv2.imread("/disk3/Graduate-design/test/trimap/{:0>6}.png".format(ix*10 + i)) for i in range(10)])[:,:,:,0:1]
-            for ixx,pic in enumerate(sess.run(tf.get_default_graph().get_tensor_by_name("pred_alpha/res:0"),feed_dict={image_batch:rgb,GT_matte_batch:alpha,GT_trimap:tr,training:True})*255):
-                cv2.imwrite("./res/{:0>4}.png".format(ix*10 + ixx),pic)
-            print sess.run([total_loss,sad,mse],feed_dict={image_batch:rgb,GT_matte_batch:alpha,GT_trimap:tr,training:True})
-        batch_num += 1
-    batch_num = 0
-    epoch_num += 1
+            rg_t = np.array([cv2.imread("/disk3/Graduate-design/test/rgb/{:0>6}.png".format(ix*10 + i)) for i in range(10)])
+            al_t = np.array([cv2.imread("/disk3/Graduate-design/test/alpha/{:0>6}.png".format(ix*10 + i)) for i in range(10)])[:,:,:,0:1]
+            tr_t = np.array([cv2.imread("/disk3/Graduate-design/test/trimap/{:0>6}.png".format(ix*10 + i)) for i in range(10)])[:,:,:,0:1]
+            feed_t = {rgb:rg_t,alpha:al_t,trimap:tr_t,training:True}
+            pre_t = tf.get_default_graph().get_tensor_by_name("pred_alpha/res:0")
+            for ixx,pic in enumerate(sess.run(pre_t,feed_dict=feed_t)):
+                cv2.imwrite("./res/{:0>6}.png".format(ix*10 + ixx),pic)
+            print sess.run([mae,sad,mse],feed_dict=feed_f)
 
 
