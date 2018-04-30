@@ -86,7 +86,7 @@ def generate(n):
                 print count
 
 def main():
-    generate(20000)
+    generate(200000)
 
 if __name__ == "__main__":
     main()

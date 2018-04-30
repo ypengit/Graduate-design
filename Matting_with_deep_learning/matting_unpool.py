@@ -9,8 +9,8 @@ os.environ['CUDA_VISIBLE_DEVICES']='0'
 image_size = 320
 train_batch_size = 10
 
-#checkpoint file path
-pretrained_model = False
+# choose weather to load data to sess
+pretrained_model = True
 is_train = True 
 
 en_parameters = []
@@ -39,15 +39,19 @@ def unpool(pool, ind, ksize=[1, 2, 2, 1], scope='unpool'):
 rgb    = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,3))
 alpha  = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,1))
 trimap = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,1))
+pred_mat_s = tf.placeholder(tf.float32, shape = (train_batch_size, image_size, image_size,1))
+
+keep_prob = tf.placeholder(tf.float32)
+
 training = tf.placeholder(tf.bool)
 trainable= True
 
-input_concat = tf.cast(tf.concat([rgb,trimap],3),tf.float32)
+input_concat = tf.divide(tf.cast(tf.concat([rgb,trimap],3),tf.float32),255.0)
 
 # conv1_1
 with tf.name_scope('conv1_1') as scope:
     kernel = tf.Variable(tf.truncated_normal([3, 3, 4, 64], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(input_concat, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -58,7 +62,7 @@ with tf.name_scope('conv1_1') as scope:
 # conv1_2
 with tf.name_scope('conv1_2') as scope:
     kernel = tf.Variable(tf.truncated_normal([3, 3, 64, 64], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(conv1_1, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -73,7 +77,7 @@ pool_parameters.append(arg1)
 # conv2_1
 with tf.name_scope('conv2_1') as scope:
     kernel = tf.Variable(tf.truncated_normal([3, 3, 64, 128], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(pool1, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[128], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -84,7 +88,7 @@ with tf.name_scope('conv2_1') as scope:
 # conv2_2
 with tf.name_scope('conv2_2') as scope:
     kernel = tf.Variable(tf.truncated_normal([3, 3, 128, 128], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(conv2_1, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[128], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -99,7 +103,7 @@ pool_parameters.append(arg2)
 # conv3_1
 with tf.name_scope('conv3_1') as scope:
     kernel = tf.Variable(tf.truncated_normal([3, 3, 128, 256], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(pool2, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[256], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -110,7 +114,7 @@ with tf.name_scope('conv3_1') as scope:
 # conv3_2
 with tf.name_scope('conv3_2') as scope:
     kernel = tf.Variable(tf.truncated_normal([3, 3, 256, 256], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(conv3_1, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[256], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -121,7 +125,7 @@ with tf.name_scope('conv3_2') as scope:
 # conv3_3
 with tf.name_scope('conv3_3') as scope:
     kernel = tf.Variable(tf.truncated_normal([3, 3, 256, 256], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(conv3_2, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[256], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -136,7 +140,7 @@ pool_parameters.append(arg3)
 # conv4_1
 with tf.name_scope('conv4_1') as scope:
     kernel = tf.Variable(tf.truncated_normal([3, 3, 256, 512], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(pool3, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[512], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -147,7 +151,7 @@ with tf.name_scope('conv4_1') as scope:
 # conv4_2
 with tf.name_scope('conv4_2') as scope:
     kernel = tf.Variable(tf.truncated_normal([3, 3, 512, 512], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(conv4_1, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[512], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -158,7 +162,7 @@ with tf.name_scope('conv4_2') as scope:
 # conv4_3
 with tf.name_scope('conv4_3') as scope:
     kernel = tf.Variable(tf.truncated_normal([3, 3, 512, 512], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(conv4_2, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[512], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -173,7 +177,7 @@ pool_parameters.append(arg4)
 # conv5_1
 with tf.name_scope('conv5_1') as scope:
     kernel = tf.Variable(tf.truncated_normal([3, 3, 512, 512], dtype=tf.float32,
-                                         stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(pool4, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[512], dtype=tf.float32),
                      trainable=trainable, name='biases')
@@ -184,7 +188,7 @@ with tf.name_scope('conv5_1') as scope:
 # conv5_2
 with tf.name_scope('conv5_2') as scope:
     kernel = tf.Variable(tf.truncated_normal([3, 3, 512, 512], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(conv5_1, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[512], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -195,7 +199,7 @@ with tf.name_scope('conv5_2') as scope:
 # conv5_3
 with tf.name_scope('conv5_3') as scope:
     kernel = tf.Variable(tf.truncated_normal([3, 3, 512, 512], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(conv5_2, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[512], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -209,7 +213,7 @@ pool_parameters.append(arg5)
 # conv6_1
 with tf.name_scope('conv6_1') as scope:
     kernel = tf.Variable(tf.truncated_normal([7, 7, 512, 4096], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(pool5, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[4096], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -219,7 +223,7 @@ with tf.name_scope('conv6_1') as scope:
 #deconv6
 with tf.variable_scope('deconv6') as scope:
     kernel = tf.Variable(tf.truncated_normal([1, 1, 4096, 512], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(conv6_1, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[512], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -232,7 +236,7 @@ deconv5_1 = unpool(deconv6,pool_parameters[-1])
 #deconv5_2
 with tf.variable_scope('deconv5_2') as scope:
     kernel = tf.Variable(tf.truncated_normal([5, 5, 512, 512], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(deconv5_1, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[512], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -245,7 +249,7 @@ deconv4_1 = unpool(deconv5_2,pool_parameters[-2])
 #deconv4_2
 with tf.variable_scope('deconv4_2') as scope:
     kernel = tf.Variable(tf.truncated_normal([5, 5, 512, 256], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(deconv4_1, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[256], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -258,7 +262,7 @@ deconv3_1 = unpool(deconv4_2,pool_parameters[-3])
 #deconv3_2
 with tf.variable_scope('deconv3_2') as scope:
     kernel = tf.Variable(tf.truncated_normal([5, 5, 256, 128], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(deconv3_1, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[128], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -271,7 +275,7 @@ deconv2_1 = unpool(deconv3_2,pool_parameters[-4])
 #deconv2_2
 with tf.variable_scope('deconv2_2') as scope:
     kernel = tf.Variable(tf.truncated_normal([5, 5, 128, 64], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(deconv2_1, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -284,7 +288,7 @@ deconv1_1 = unpool(deconv2_2,pool_parameters[-5])
 #deconv1_2
 with tf.variable_scope('deconv1_2') as scope:
     kernel = tf.Variable(tf.truncated_normal([5, 5, 64, 64], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(deconv1_1, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -293,7 +297,7 @@ with tf.variable_scope('deconv1_2') as scope:
 #pred_alpha_matte
 with tf.variable_scope('pred_alpha') as scope:
     kernel = tf.Variable(tf.truncated_normal([5, 5, 64, 1], dtype=tf.float32,
-                                             stddev=1e-1), name='weights')
+                                 stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(deconv1_2, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[1], dtype=tf.float32),
                          trainable=trainable, name='biases')
@@ -304,18 +308,61 @@ with tf.variable_scope('pred_alpha') as scope:
     pred_mat = tf.where(tf.greater(pred_mat,1),tf.ones_like(pred_mat),pred_mat)
     pred_mat = tf.where(tf.less(pred_mat,0),tf.zeros_like(pred_mat),pred_mat,name='res')
 
+with tf.name_scope('refinement') as scope:
+    with tf.variable_scope('ref1') as scope:
+        kernel = tf.Variable(tf.truncated_normal([3, 3,  1,64], dtype=tf.float32,
+                                     stddev=1e-1), name='weights',trainable=trainable)
+        conv = tf.nn.conv2d(pred_mat_s, kernel, [1, 1, 1, 1], padding='SAME')
+        biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
+                             trainable=True, name='biases')
+        ref1 = tf.nn.dropout(tf.nn.bias_add(conv, biases),keep_prob)
+    with tf.variable_scope('ref2') as scope:
+        kernel = tf.Variable(tf.truncated_normal([3, 3, 64,64], dtype=tf.float32,
+                                     stddev=1e-1), name='weights',trainable=trainable)
+        conv = tf.nn.conv2d(ref1, kernel, [1, 1, 1, 1], padding='SAME')
+        biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
+                             trainable=True, name='biases')
+        ref2 = tf.nn.dropout(tf.nn.bias_add(conv, biases),keep_prob)
+    with tf.variable_scope('ref3') as scope:
+        kernel = tf.Variable(tf.truncated_normal([3, 3, 64,64], dtype=tf.float32,
+                                     stddev=1e-1), name='weights',trainable=trainable)
+        conv = tf.nn.conv2d(ref2, kernel, [1, 1, 1, 1], padding='SAME')
+        biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
+                             trainable=True, name='biases')
+        ref3 = tf.nn.dropout(tf.nn.bias_add(conv, biases),keep_prob)
+    with tf.variable_scope('ref4') as scope:
+        kernel = tf.Variable(tf.truncated_normal([3, 3, 64, 1], dtype=tf.float32,
+                                     stddev=1e-1), name='weights',trainable=trainable)
+        conv = tf.nn.conv2d(ref3, kernel, [1, 1, 1, 1], padding='SAME')
+        biases = tf.Variable(tf.constant(0.0, shape=[1], dtype=tf.float32),
+                             trainable=True, name='biases')
+        ref4 = tf.nn.bias_add(conv, biases)
+        pred_mat_f = ref4
+        pred_mat_f = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat_f),pred_mat_f)
+        pred_mat_f = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat_f),pred_mat_f)
+        pred_mat_f = tf.where(tf.greater(pred_mat_f,1),tf.ones_like(pred_mat_f),pred_mat_f)
+        pred_mat_f = tf.where(tf.less(pred_mat_f,0),tf.zeros_like(pred_mat_f),pred_mat_f,name='res')
+
+
+
 
 
 alpha_f = tf.divide(tf.cast(alpha,tf.float32),255.0)
 
 
 cou = tf.cast(tf.reduce_sum(tf.where(tf.equal(trimap,128),tf.ones_like(trimap),tf.zeros_like(trimap))), tf.float32)
-diff = tf.abs(tf.subtract(pred_mat,alpha_f))
+diff   = tf.abs(tf.subtract(pred_mat,alpha_f))
+diff_f = tf.abs(tf.subtract(pred_mat_f,alpha_f))
 mae = tf.divide(tf.reduce_sum(diff),cou)
 mse = tf.divide(tf.reduce_sum(tf.pow(diff,2.0)),cou)
 sad = tf.divide(tf.reduce_sum(diff),1000.0)
 
-train_op = tf.train.AdamOptimizer(learning_rate = 1e-5).minimize(mse)
+mae_f = tf.divide(tf.reduce_sum(diff_f),cou)
+mse_f = tf.divide(tf.reduce_sum(tf.pow(diff_f,2.0)),cou)
+sad_f = tf.divide(tf.reduce_sum(diff_f),1000.0)
+
+train_op   = tf.train.AdamOptimizer(learning_rate = 1e-5).minimize(mse)
+train_op_f = tf.train.AdamOptimizer(learning_rate = 1e-5).minimize(tf.reduce_mean(ref1))
 
 saver = tf.train.Saver(max_to_keep=5)
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction = 1.0)
@@ -349,15 +396,29 @@ with tf.Session(config=tf.ConfigProto(gpu_options = gpu_options)) as sess:
             batch_rgb   = np.array([cv2.imread("/disk3/Graduate-design/data/rgb/{:0>6}.png".format(idx*10 + i)) for i in range(10)])
             batch_alpha = np.array([cv2.imread("/disk3/Graduate-design/data/alpha/{:0>6}.png".format(idx*10 + i)) for i in range(10)])[:,:,:,0:1]
             batch_trimap= np.array([cv2.imread("/disk3/Graduate-design/data/trimap/{:0>6}.png".format(idx*10 + i)) for i in range(10)])[:,:,:,0:1]
+
+            # construct feed_dict for stage 1 training
             feed = {rgb:batch_rgb, alpha:batch_alpha,trimap:batch_trimap,training:True}
-            _,mae_,sad_,mse_ = sess.run([train_op,mae,sad,mse],feed_dict = feed)
+            pred_alpha = tf.get_default_graph().get_tensor_by_name('pred_alpha/res:0')
+            _,mae_,sad_,mse_,pred_mat_s1 = sess.run([train_op,mae,sad,mse,pred_alpha],feed_dict = feed)
             print('step is %06d MAE is %f, SAD is %f, MSE is %f' %(idx,mae_,sad_,mse_))
+
+            # if the idx is greater than 1000, start to train stage2, or it will
+            # make no sense
+            if idx > 1000:
+                # construct feed_dict for stage 2 training
+                pred_f = tf.get_default_graph().get_tensor_by_name('refinement/ref4/res:0')
+                feed_f = {alpha:batch_alpha,trimap:batch_trimap,pred_mat_s:pred_mat_s1,keep_prob:0.5,training:True}
+                _,mae_fs,sad_fs,mse_fs,pred_mat_s2 = sess.run([train_op_f,mae_f,sad_f,mse_f,pred_f],feed_dict = feed_f)
+                # show the loss of stage 1 and stage 2
+                print('step is %06d MAE is %f, SAD is %f, MSE is %f' %(idx,mae_fs,sad_fs,mse_fs))
+
         if idx % 10 == 0:
             ix = idx / 10
             rg_t = np.array([cv2.imread("/disk3/Graduate-design/test/rgb/{:0>6}.png".format(ix*10 + i)) for i in range(10)])
             al_t = np.array([cv2.imread("/disk3/Graduate-design/test/alpha/{:0>6}.png".format(ix*10 + i)) for i in range(10)])[:,:,:,0:1]
             tr_t = np.array([cv2.imread("/disk3/Graduate-design/test/trimap/{:0>6}.png".format(ix*10 + i)) for i in range(10)])[:,:,:,0:1]
-            feed_t = {rgb:rg_t,alpha:al_t,trimap:tr_t,training:False}
+            feed_t = {rgb:rg_t,alpha:al_t,trimap:tr_t,training:True}
             pre_t = tf.get_default_graph().get_tensor_by_name("pred_alpha/res:0")
             for ixx,pic in enumerate(sess.run(pre_t,feed_dict=feed_t)):
                 cv2.imwrite("./res/{:0>6}.png".format(ix*10 + ixx),pic)
