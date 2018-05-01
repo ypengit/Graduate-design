@@ -10,7 +10,7 @@ image_size = 320
 train_batch_size = 10
 
 # choose weather to load data to sess
-pretrained_model = True
+pretrained_model = False
 is_train = True 
 
 en_parameters = []
@@ -40,6 +40,10 @@ rgb    = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_siz
 alpha  = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,1))
 trimap = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,1))
 pred_mat_s = tf.placeholder(tf.float32, shape = (train_batch_size, image_size, image_size,1))
+rgb_sm = tf.summary.image('rgb',tf.cast(rgb,tf.float32),max_outputs=5)
+alpha_sm = tf.summary.image('alpha',tf.cast(alpha,tf.float32),max_outputs=5)
+trimap_sm = tf.summary.image('trimap',tf.cast(trimap,tf.float32),max_outputs=5)
+pred_mat_s_sm = tf.summary.image('pred_mat_s',pred_mat_s,max_outputs=5)
 
 keep_prob = tf.placeholder(tf.float32)
 
@@ -303,10 +307,11 @@ with tf.variable_scope('pred_alpha') as scope:
                          trainable=trainable, name='biases')
     out = tf.nn.bias_add(conv, biases)
     pred_mat = out
-    pred_mat = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat),pred_mat)
-    pred_mat = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat),pred_mat)
+    # pred_mat = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat),pred_mat)
+    # pred_mat = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat),pred_mat)
     pred_mat = tf.where(tf.greater(pred_mat,1),tf.ones_like(pred_mat),pred_mat)
     pred_mat = tf.where(tf.less(pred_mat,0),tf.zeros_like(pred_mat),pred_mat,name='res')
+    pred_mat_sm = tf.summary.image('pred_mat',pred_mat,max_outputs=5)
 
 with tf.name_scope('refinement') as scope:
     with tf.variable_scope('ref1') as scope:
@@ -338,12 +343,15 @@ with tf.name_scope('refinement') as scope:
                              trainable=True, name='biases')
         ref4 = tf.nn.bias_add(conv, biases)
         pred_mat_f = ref4
-        pred_mat_f = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat_f),pred_mat_f)
-        pred_mat_f = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat_f),pred_mat_f)
+        # pred_mat_f = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat_f),pred_mat_f)
+        # pred_mat_f = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat_f),pred_mat_f)
         pred_mat_f = tf.where(tf.greater(pred_mat_f,1),tf.ones_like(pred_mat_f),pred_mat_f)
         pred_mat_f = tf.where(tf.less(pred_mat_f,0),tf.zeros_like(pred_mat_f),pred_mat_f,name='res')
 
-
+pred_mat_f_sm = tf.summary.image('pred_mat_f',tf.multiply(pred_mat_f,255.0),max_outputs=5)
+pred_mat_f_l = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat_f),pred_mat_f)
+pred_mat_f_l = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat_f_l),pred_mat_f_l)
+pred_mat_f_l_sm = tf.summary.image('pred_mat_f_l',tf.multiply(pred_mat_f_l,255.0),max_outputs=5)
 
 
 
@@ -353,19 +361,31 @@ alpha_f = tf.divide(tf.cast(alpha,tf.float32),255.0)
 cou = tf.cast(tf.reduce_sum(tf.where(tf.equal(trimap,128),tf.ones_like(trimap),tf.zeros_like(trimap))), tf.float32)
 diff   = tf.abs(tf.subtract(pred_mat,alpha_f))
 diff_f = tf.abs(tf.subtract(pred_mat_f,alpha_f))
+
 mae = tf.divide(tf.reduce_sum(diff),cou)
 mse = tf.divide(tf.reduce_sum(tf.pow(diff,2.0)),cou)
 sad = tf.divide(tf.reduce_sum(diff),1000.0)
+
+MAE_sm = tf.summary.scalar('MAE',mae,family='stage1')
+MSE_sm = tf.summary.scalar('MSE',mse,family='stage1')
+SAD_sm = tf.summary.scalar('SAD',sad,family='stage1')
 
 mae_f = tf.divide(tf.reduce_sum(diff_f),cou)
 mse_f = tf.divide(tf.reduce_sum(tf.pow(diff_f,2.0)),cou)
 sad_f = tf.divide(tf.reduce_sum(diff_f),1000.0)
 
+MAE_f_sm = tf.summary.scalar('MAE_f',mae_f,family='stage2')
+MSE_f_sm = tf.summary.scalar('MSE_f',mse_f,family='stage2')
+SAD_f_sm = tf.summary.scalar('SAD_f',sad_f,family='stage2')
+
 train_op   = tf.train.AdamOptimizer(learning_rate = 1e-5).minimize(mse)
-train_op_f = tf.train.AdamOptimizer(learning_rate = 1e-5).minimize(tf.reduce_mean(ref1))
+train_op_f = tf.train.AdamOptimizer(learning_rate = 1e-5).minimize(mse_f)
 
 saver = tf.train.Saver(max_to_keep=5)
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction = 1.0)
+merged_st1 = tf.summary.merge([rgb_sm,alpha_sm,trimap_sm,MAE_sm,MSE_sm,SAD_sm,pred_mat_sm])
+merged_st2 = tf.summary.merge([pred_mat_s_sm,pred_mat_f_sm,MAE_f_sm,MSE_f_sm,SAD_f_sm,pred_mat_f_l_sm])
+train_writer = tf.summary.FileWriter('/disk3/Graduate-design/train_log/train/')
 with tf.Session(config=tf.ConfigProto(gpu_options = gpu_options)) as sess:
     sess.run(tf.global_variables_initializer())
     #initialize all parameters in vgg16
@@ -400,18 +420,23 @@ with tf.Session(config=tf.ConfigProto(gpu_options = gpu_options)) as sess:
             # construct feed_dict for stage 1 training
             feed = {rgb:batch_rgb, alpha:batch_alpha,trimap:batch_trimap,training:True}
             pred_alpha = tf.get_default_graph().get_tensor_by_name('pred_alpha/res:0')
-            _,mae_,sad_,mse_,pred_mat_s1 = sess.run([train_op,mae,sad,mse,pred_alpha],feed_dict = feed)
+            _,summary,mae_,sad_,mse_,pred_mat_s1 = sess.run([train_op,merged_st1,mae,sad,mse,pred_alpha],feed_dict = feed)
             print('step is %06d MAE is %f, SAD is %f, MSE is %f' %(idx,mae_,sad_,mse_))
+            if idx % 5 == 0:
+                train_writer.add_summary(summary,idx)
 
             # if the idx is greater than 1000, start to train stage2, or it will
             # make no sense
-            if idx > 1000:
+            if idx > 2000:
                 # construct feed_dict for stage 2 training
                 pred_f = tf.get_default_graph().get_tensor_by_name('refinement/ref4/res:0')
                 feed_f = {alpha:batch_alpha,trimap:batch_trimap,pred_mat_s:pred_mat_s1,keep_prob:0.5,training:True}
-                _,mae_fs,sad_fs,mse_fs,pred_mat_s2 = sess.run([train_op_f,mae_f,sad_f,mse_f,pred_f],feed_dict = feed_f)
+                _,summary,mae_fs,sad_fs,mse_fs,pred_mat_s2 = sess.run([train_op_f,merged_st2,mae_f,sad_f,mse_f,pred_f],feed_dict = feed_f)
+
                 # show the loss of stage 1 and stage 2
                 print('step is %06d MAE is %f, SAD is %f, MSE is %f' %(idx,mae_fs,sad_fs,mse_fs))
+            if idx % 5 == 0:
+                train_writer.add_summary(summary,idx)
 
         if idx % 10 == 0:
             ix = idx / 10
