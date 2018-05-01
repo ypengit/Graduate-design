@@ -307,34 +307,37 @@ with tf.variable_scope('pred_alpha') as scope:
                          trainable=trainable, name='biases')
     out = tf.nn.bias_add(conv, biases)
     pred_mat = out
-    # pred_mat = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat),pred_mat)
-    # pred_mat = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat),pred_mat)
+    pred_mat = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat),pred_mat)
+    pred_mat = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat),pred_mat)
     pred_mat = tf.where(tf.greater(pred_mat,1),tf.ones_like(pred_mat),pred_mat)
     pred_mat = tf.where(tf.less(pred_mat,0),tf.zeros_like(pred_mat),pred_mat,name='res')
     pred_mat_sm = tf.summary.image('pred_mat',pred_mat,max_outputs=5)
 
+#pre = tf.contrib.slim.get_variables_to_restore()
+
 with tf.name_scope('refinement') as scope:
     with tf.variable_scope('ref1') as scope:
-        kernel = tf.Variable(tf.truncated_normal([3, 3,  1,64], dtype=tf.float32,
+        kernel = tf.Variable(tf.truncated_normal([3, 3,  5,64], dtype=tf.float32,
                                      stddev=1e-1), name='weights',trainable=trainable)
-        conv = tf.nn.conv2d(pred_mat_s, kernel, [1, 1, 1, 1], padding='SAME')
+        conv = tf.nn.conv2d(tf.concat([pred_mat_s,tf.divide(tf.cast(rgb,tf.float32),255.0),
+            tf.divide(tf.cast(trimap,tf.float32),255.0)],axis=3), kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
                              trainable=True, name='biases')
-        ref1 = tf.nn.dropout(tf.nn.bias_add(conv, biases),keep_prob)
+        ref1 = tf.nn.bias_add(conv, biases)
     with tf.variable_scope('ref2') as scope:
         kernel = tf.Variable(tf.truncated_normal([3, 3, 64,64], dtype=tf.float32,
                                      stddev=1e-1), name='weights',trainable=trainable)
         conv = tf.nn.conv2d(ref1, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
                              trainable=True, name='biases')
-        ref2 = tf.nn.dropout(tf.nn.bias_add(conv, biases),keep_prob)
+        ref2 = tf.nn.bias_add(conv, biases)
     with tf.variable_scope('ref3') as scope:
         kernel = tf.Variable(tf.truncated_normal([3, 3, 64,64], dtype=tf.float32,
                                      stddev=1e-1), name='weights',trainable=trainable)
         conv = tf.nn.conv2d(ref2, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
                              trainable=True, name='biases')
-        ref3 = tf.nn.dropout(tf.nn.bias_add(conv, biases),keep_prob)
+        ref3 = tf.nn.bias_add(conv, biases)
     with tf.variable_scope('ref4') as scope:
         kernel = tf.Variable(tf.truncated_normal([3, 3, 64, 1], dtype=tf.float32,
                                      stddev=1e-1), name='weights',trainable=trainable)
@@ -343,12 +346,12 @@ with tf.name_scope('refinement') as scope:
                              trainable=True, name='biases')
         ref4 = tf.nn.bias_add(conv, biases)
         pred_mat_f = ref4
-        # pred_mat_f = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat_f),pred_mat_f)
-        # pred_mat_f = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat_f),pred_mat_f)
+        pred_mat_f = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat_f),pred_mat_f)
+        pred_mat_f = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat_f),pred_mat_f)
         pred_mat_f = tf.where(tf.greater(pred_mat_f,1),tf.ones_like(pred_mat_f),pred_mat_f)
         pred_mat_f = tf.where(tf.less(pred_mat_f,0),tf.zeros_like(pred_mat_f),pred_mat_f,name='res')
 
-pred_mat_f_sm = tf.summary.image('pred_mat_f',tf.multiply(pred_mat_f,255.0),max_outputs=5)
+pred_mat_f_sm = tf.summary.image('pred_mat_f',pred_mat_f,max_outputs=5)
 pred_mat_f_l = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat_f),pred_mat_f)
 pred_mat_f_l = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat_f_l),pred_mat_f_l)
 pred_mat_f_l_sm = tf.summary.image('pred_mat_f_l',tf.multiply(pred_mat_f_l,255.0),max_outputs=5)
@@ -366,6 +369,11 @@ mae = tf.divide(tf.reduce_sum(diff),cou)
 mse = tf.divide(tf.reduce_sum(tf.pow(diff,2.0)),cou)
 sad = tf.divide(tf.reduce_sum(diff),1000.0)
 
+MAE_his = tf.summary.histogram('MAE_his',mae,family='stage1')
+MSE_his = tf.summary.histogram('MSE_his',mse,family='stage1')
+SAD_his = tf.summary.histogram('SAD_his',sad,family='stage1')
+
+
 MAE_sm = tf.summary.scalar('MAE',mae,family='stage1')
 MSE_sm = tf.summary.scalar('MSE',mse,family='stage1')
 SAD_sm = tf.summary.scalar('SAD',sad,family='stage1')
@@ -379,11 +387,11 @@ MSE_f_sm = tf.summary.scalar('MSE_f',mse_f,family='stage2')
 SAD_f_sm = tf.summary.scalar('SAD_f',sad_f,family='stage2')
 
 train_op   = tf.train.AdamOptimizer(learning_rate = 1e-5).minimize(mse)
-train_op_f = tf.train.AdamOptimizer(learning_rate = 1e-5).minimize(mse_f)
+train_op_f = tf.train.AdamOptimizer(learning_rate = 1e-4).minimize(mse_f)
 
 saver = tf.train.Saver(max_to_keep=5)
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction = 1.0)
-merged_st1 = tf.summary.merge([rgb_sm,alpha_sm,trimap_sm,MAE_sm,MSE_sm,SAD_sm,pred_mat_sm])
+merged_st1 = tf.summary.merge([rgb_sm,alpha_sm,trimap_sm,MAE_sm,MSE_sm,SAD_sm,pred_mat_sm,MAE_his,MSE_his,SAD_his])
 merged_st2 = tf.summary.merge([pred_mat_s_sm,pred_mat_f_sm,MAE_f_sm,MSE_f_sm,SAD_f_sm,pred_mat_f_l_sm])
 train_writer = tf.summary.FileWriter('/disk3/Graduate-design/train_log/train/')
 with tf.Session(config=tf.ConfigProto(gpu_options = gpu_options)) as sess:
@@ -411,6 +419,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options = gpu_options)) as sess:
         if is_train:
             idx = np.load('/disk3/Graduate-design/model/idx.npy') + 1
 
+    count_ = 0
     for _ in range(10000):
         if is_train:
             batch_rgb   = np.array([cv2.imread("/disk3/Graduate-design/data/rgb/{:0>6}.png".format(idx*10 + i)) for i in range(10)])
@@ -430,7 +439,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options = gpu_options)) as sess:
             if idx > 2000:
                 # construct feed_dict for stage 2 training
                 pred_f = tf.get_default_graph().get_tensor_by_name('refinement/ref4/res:0')
-                feed_f = {alpha:batch_alpha,trimap:batch_trimap,pred_mat_s:pred_mat_s1,keep_prob:0.5,training:True}
+                feed_f = {rgb:batch_rgb,alpha:batch_alpha,trimap:batch_trimap,pred_mat_s:pred_mat_s1,keep_prob:0.5,training:True}
                 _,summary,mae_fs,sad_fs,mse_fs,pred_mat_s2 = sess.run([train_op_f,merged_st2,mae_f,sad_f,mse_f,pred_f],feed_dict = feed_f)
 
                 # show the loss of stage 1 and stage 2
