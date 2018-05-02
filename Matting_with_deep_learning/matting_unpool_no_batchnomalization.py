@@ -232,7 +232,7 @@ with tf.variable_scope('deconv6') as scope:
     biases = tf.Variable(tf.constant(0.0, shape=[512], dtype=tf.float32),
                          trainable=trainable, name='biases')
     out = tf.nn.bias_add(conv, biases)
-    deconv6 = tf.nn.relu(tf.layers.batch_normalization(out,training=training), name='deconv6')
+    deconv6 = tf.nn.relu(out, name='deconv6')
 
 #deconv5_1/unpooling
 deconv5_1 = unpool(deconv6,pool_parameters[-1])
@@ -245,7 +245,7 @@ with tf.variable_scope('deconv5_2') as scope:
     biases = tf.Variable(tf.constant(0.0, shape=[512], dtype=tf.float32),
                          trainable=trainable, name='biases')
     out = tf.nn.bias_add(conv, biases)
-    deconv5_2 = tf.nn.relu(tf.layers.batch_normalization(out,training=training), name='deconv5_2')
+    deconv5_2 = tf.nn.relu(out, name='deconv5_2')
 
 #deconv4_1/unpooling
 deconv4_1 = unpool(deconv5_2,pool_parameters[-2])
@@ -258,7 +258,7 @@ with tf.variable_scope('deconv4_2') as scope:
     biases = tf.Variable(tf.constant(0.0, shape=[256], dtype=tf.float32),
                          trainable=trainable, name='biases')
     out = tf.nn.bias_add(conv, biases)
-    deconv4_2 = tf.nn.relu(tf.layers.batch_normalization(out,training=True), name='deconv4_2')
+    deconv4_2 = tf.nn.relu(out, name='deconv4_2')
 
 #deconv3_1/unpooling
 deconv3_1 = unpool(deconv4_2,pool_parameters[-3])
@@ -271,7 +271,7 @@ with tf.variable_scope('deconv3_2') as scope:
     biases = tf.Variable(tf.constant(0.0, shape=[128], dtype=tf.float32),
                          trainable=trainable, name='biases')
     out = tf.nn.bias_add(conv, biases)
-    deconv3_2 = tf.nn.relu(tf.layers.batch_normalization(out,training=training), name='deconv3_2')
+    deconv3_2 = tf.nn.relu(out, name='deconv3_2')
 
 #deconv2_1/unpooling
 deconv2_1 = unpool(deconv3_2,pool_parameters[-4])
@@ -284,7 +284,7 @@ with tf.variable_scope('deconv2_2') as scope:
     biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
                          trainable=trainable, name='biases')
     out = tf.nn.bias_add(conv, biases)
-    deconv2_2 = tf.nn.relu(tf.layers.batch_normalization(out,training=training), name='deconv2_2')
+    deconv2_2 = tf.nn.relu(out, name='deconv2_2')
 
 #deconv1_1/unpooling
 deconv1_1 = unpool(deconv2_2,pool_parameters[-5])
@@ -297,7 +297,7 @@ with tf.variable_scope('deconv1_2') as scope:
     biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
                          trainable=trainable, name='biases')
     out = tf.nn.bias_add(conv, biases)
-    deconv1_2 = tf.nn.relu(tf.layers.batch_normalization(out,training=training), name='deconv1_2')
+    deconv1_2 = tf.nn.relu(out, name='deconv1_2')
 #pred_alpha_matte
 with tf.variable_scope('pred_alpha') as scope:
     kernel = tf.Variable(tf.truncated_normal([5, 5, 64, 1], dtype=tf.float32,
@@ -386,7 +386,7 @@ MAE_f_sm = tf.summary.scalar('MAE_f',mae_f,family='stage2')
 MSE_f_sm = tf.summary.scalar('MSE_f',mse_f,family='stage2')
 SAD_f_sm = tf.summary.scalar('SAD_f',sad_f,family='stage2')
 
-train_op   = tf.train.AdamOptimizer(learning_rate = 1e-5).minimize(mse)
+train_op   = tf.train.AdamOptimizer(learning_rate = 3e-4).minimize(mse)
 train_op_f = tf.train.AdamOptimizer(learning_rate = 1e-4).minimize(mse_f)
 
 saver = tf.train.Saver(max_to_keep=5)
@@ -418,6 +418,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options = gpu_options)) as sess:
         saver.restore(sess,tf.train.latest_checkpoint('/disk3/Graduate-design/model/',latest_filename='latestcheckpoint_file'))
         if is_train:
             idx = np.load('/disk3/Graduate-design/model/idx.npy') + 1
+            idx = 2001
 
     count_ = 0
     for _ in range(10000):
