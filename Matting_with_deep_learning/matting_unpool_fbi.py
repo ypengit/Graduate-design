@@ -1,8 +1,9 @@
-# import tensorflow as tf
-# import cv2
-import numpy as np
+#!/usr/bin/python
 import os
 import pdb
+import cv2
+import numpy as np
+import tensorflow as tf
 from scipy import misc
 os.environ['CUDA_VISIBLE_DEVICES']='0'
 
@@ -11,7 +12,7 @@ train_batch_size = 10
 
 # choose weather to load data to sess
 pretrained_model = True
-is_train = True 
+is_train = True
 
 en_parameters = []
 pool_parameters = []
@@ -40,12 +41,14 @@ F = tf.placeholder(tf.int32, shape = (train_batch_size, image_size, image_size, 
 B = tf.placeholder(tf.int32, shape = (train_batch_size, image_size, image_size, 3))
 I = tf.placeholder(tf.int32, shape = (train_batch_size, image_size, image_size, 3))
 
-trimap_f = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,1))
-trimap_b = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,1))
-trimap_i = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,1))
+trimap_f = tf.placeholder(tf.int32, shape=(train_batch_size, image_size, image_size, 1))
+trimap_b = tf.placeholder(tf.int32, shape=(train_batch_size, image_size, image_size, 1))
+trimap_i = tf.placeholder(tf.int32, shape=(train_batch_size, image_size, image_size, 1))
 
-distance_fi = tf.placeholder(tf.float32, shape = (train_batch_size,image_size,image_size,1))
-distance_bi = tf.placeholder(tf.float32, shape = (train_batch_size,image_size,image_size,1))
+trimap_fbi = tf.cast(tf.divide(tf.concat([trimap_f, trimap_b, trimap_i], 3), 128.0), tf.int32)
+
+distance_fi = tf.placeholder(tf.float32, shape=(train_batch_size,image_size,image_size,1))
+distance_bi = tf.placeholder(tf.float32, shape=(train_batch_size,image_size,image_size,1))
 
 cal_alpha  = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,1))
 diff = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,1))
@@ -328,13 +331,20 @@ with tf.variable_scope('pred_alpha') as scope:
     out = tf.nn.bias_add(conv, biases)
     pred_mat = out
 
+
+
 diff_alpha_cal = pred_mat
 
-diff = tf.abs(tf.subtract(diff_alpha, diff_alpha_cal))
+trimap_x = tf.where(tf.equal(trimap_fbi, tf.constant(tf.int32, [0, 2 ,1]), tf.ones_like(trimap_i), tf.zeros_like(trimap_i))
+cou = tf.reduce_sum(trimap_x)
 
-mae = tf.divide(tf.reduce_sum(diff),cou)
-mse = tf.divide(tf.reduce_sum(tf.pow(diff,2.0)),cou)
-sad = tf.divide(tf.reduce_sum(diff),1000.0)
+
+diff = tf.abs(tf.subtract(diff_alpha, diff_alpha_cal))
+diff_x = tf.where(trimap_x, diff, tf.zeros_like(diff))
+
+mae = tf.divide(tf.reduce_sum(diff_x),cou)
+mse = tf.divide(tf.reduce_sum(tf.pow(diff_x,2.0)),cou)
+sad = tf.divide(tf.reduce_sum(diff_x),1000.0)
 
 MAE_his = tf.summary.histogram('MAE_his',mae,family='stage1')
 MSE_his = tf.summary.histogram('MSE_his',mse,family='stage1')
@@ -345,16 +355,7 @@ MAE_sm = tf.summary.scalar('MAE',mae,family='stage1')
 MSE_sm = tf.summary.scalar('MSE',mse,family='stage1')
 SAD_sm = tf.summary.scalar('SAD',sad,family='stage1')
 
-mae_f = tf.divide(tf.reduce_sum(diff_f),cou)
-mse_f = tf.divide(tf.reduce_sum(tf.pow(diff_f,2.0)),cou)
-sad_f = tf.divide(tf.reduce_sum(diff_f),1000.0)
-
-MAE_f_sm = tf.summary.scalar('MAE_f',mae_f,family='stage2')
-MSE_f_sm = tf.summary.scalar('MSE_f',mse_f,family='stage2')
-SAD_f_sm = tf.summary.scalar('SAD_f',sad_f,family='stage2')
-
 train_op   = tf.train.AdamOptimizer(learning_rate = 1e-5).minimize(mse)
-train_op_f = tf.train.AdamOptimizer(learning_rate = 1e-4).minimize(mse_f)
 
 saver = tf.train.Saver(max_to_keep=5)
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction = 1.0)
