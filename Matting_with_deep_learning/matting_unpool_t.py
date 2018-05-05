@@ -7,7 +7,7 @@ import tensorflow as tf
 from scipy import misc
 os.environ['CUDA_VISIBLE_DEVICES']='0'
 
-image_size = 64 
+image_size = 320
 train_batch_size = 10
 
 # choose weather to load data to sess
@@ -57,25 +57,18 @@ cal_alpha  = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image
 diff_alpha = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,1))
 real_alpha  = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,1))
 
+training = tf.placeholder(tf.bool)
+trainable = True
+
 fbi_f = tf.divide(tf.cast(tf.concat([F, B, I], axis=3), tf.float32), 255.0)
 
-cal_alpha_f = tf.divide(tf.cast(cal_alpha, tf.float32), 255.0)
-real_alpha_f = tf.divide(tf.cast(real_alpha, tf.float32), 255.0)
-diff_alpha_f = tf.divide(tf.cast(diff_alpha, tf.float32), 255.0)
+cal_alpha_f = tf.cast(cal_alpha,tf.float32) / 255.0
 
-
-trimap = tf.placeholder(tf.int32, shape = (train_batch_size,image_size,image_size,1))
-
-pred_mat_s = tf.placeholder(tf.float32, shape = (train_batch_size, image_size, image_size,1))
-
-training = tf.placeholder(tf.bool)
-trainable= True
-
-input_concat = tf.divide(tf.cast(tf.concat([fbi_f, trimap_fbi_f, distance_fi_f, distance_bi_f, cal_alpha_f],3),tf.float32),255.0)
+input_concat = fbi_f
 
 # conv1_1
 with tf.name_scope('conv1_1') as scope:
-    kernel = tf.Variable(tf.truncated_normal([3, 3, 15, 64], dtype=tf.float32,
+    kernel = tf.Variable(tf.truncated_normal([3, 3, 9, 64], dtype=tf.float32,
                                  stddev=1e-1), name='weights',trainable=trainable)
     conv = tf.nn.conv2d(input_concat, kernel, [1, 1, 1, 1], padding='SAME')
     biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
@@ -329,18 +322,16 @@ with tf.variable_scope('pred_alpha') as scope:
     out = tf.nn.bias_add(conv, biases)
     pred_mat_f = out
     pred_mat_f = tf.where(tf.greater(pred_mat_f,1),tf.ones_like(pred_mat_f),pred_mat_f)
-    pred_mat_f = tf.where(tf.less(pred_mat_f,-1),tf.zeros_like(pred_mat_f)-1,pred_mat_f,name='res')
+    pred_mat_f = tf.where(tf.less(pred_mat_f,0),tf.zeros_like(pred_mat_f),pred_mat_f,name='res')
 
 
 
-diff_alpha_cal = pred_mat_f
+cal_alpha_x = pred_mat_f
 
-# trimap_x = tf.cast(tf.ones_like(), tf.bool)
-# diff_x = tf.where(trimap_x, diff, tf.zeros_like(diff))
-
-
-cou = tf.cast(tf.size(trimap_fbi_f), tf.float32)
-diff_x = tf.abs(tf.subtract(diff_alpha_f, diff_alpha_cal))
+diff_x = abs(cal_alpha_f - cal_alpha_x)
+cou = tf.cast(tf.reduce_prod(tf.shape(cal_alpha_f)[:-1]), tf.float32)
+cou = tf.Print(cou,[cal_alpha_f[0,0,0,:]],message="cou is ")
+cou = tf.Print(cou,[cal_alpha_x[0,0,0,:]],message="cou is ")
 
 mae = tf.divide(tf.reduce_sum(diff_x),cou)
 mse = tf.divide(tf.reduce_sum(tf.pow(diff_x,2.0)),cou)
@@ -349,14 +340,6 @@ sad = tf.divide(tf.reduce_sum(diff_x),1000.0)
 MAE_his = tf.summary.histogram('MAE_his',mae,family='stage1')
 MSE_his = tf.summary.histogram('MSE_his',mse,family='stage1')
 SAD_his = tf.summary.histogram('SAD_his',sad,family='stage1')
-
-trimap_t = tf.equal(tf.reduce_sum(tf.cast(tf.equal(tf.cast(trimap_fbi_f,tf.int32), tf.constant([0,2,1])), tf.int32), axis=3, keepdims=True), tf.constant(3))
-cou_t = tf.reduce_sum(tf.cast(trimap_t, tf.float32)) + 0.01
-diff_t = tf.where(trimap_t, diff_x, tf.zeros_like(diff_x))
-
-mae_t = tf.divide(tf.reduce_sum(diff_t),cou_t)
-mse_t = tf.divide(tf.reduce_sum(tf.pow(diff_t,2.0)),cou_t)
-sad_t = tf.divide(tf.reduce_sum(diff_t),1000.0)
 
 
 train_op   = tf.train.AdamOptimizer(learning_rate = 3e-3).minimize(mse)
@@ -372,13 +355,15 @@ with tf.Session(config=tf.ConfigProto(gpu_options = gpu_options)) as sess:
         weights = np.load('/disk3/Graduate-design/model/vgg16_weights.npz')
         keys = sorted(weights.keys())
         for i, k in enumerate(keys):
+            print i,k
             if i == 28:
                 break
             if k == 'conv1_1_W':  
-                para1 = np.concatenate([weights[k] for _ in range(5)], axis=2)
+                para1 = np.concatenate([weights[k] for _ in range(3)], axis=2)
                 sess.run(en_parameters[i].assign(para1))
             else:
-                if k=='fc6_W':
+                if k=='fc6_W' or k == 'fc6_b':
+                    continue
                     tmp = np.reshape(weights[k],(7,7,512,4096))
                     sess.run(en_parameters[i].assign(tmp))
                 else:
@@ -418,8 +403,8 @@ with tf.Session(config=tf.ConfigProto(gpu_options = gpu_options)) as sess:
             pred_alpha = tf.get_default_graph().get_tensor_by_name('pred_alpha/res:0')
 
 
-            _,mae_,sad_,mse_,diff_,mae_t_,sad_t_,mse_t_ = sess.run([train_op,mae,sad,mse,diff_x,mae_t,sad_t,mse_t],feed_dict = feed)
-            print("the step is %06d  mae is %f  sad is %f  mse is %f  mae_t is %f  sad is %f  mse is %f" % (idx,mae_,sad_,mse_,mae_t_,sad_t_,mse_t_))
+            _,mae_,sad_,mse_,diff_ = sess.run([train_op,mae,sad,mse,diff_x],feed_dict = feed)
+            print("the step is %06d  mae is %f  sad is %f  mse is %f" % (idx,mae_,sad_,mse_))
 
 
 
