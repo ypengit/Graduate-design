@@ -16,15 +16,13 @@ def file_names(file_dir):
     file_paths.sort()
     return file_paths
 def file_content(filename,t):
-    if t == 'alpha':
-        return cv2.imread(filename,cv2.CV_8UC1)
     return cv2.imread(filename)
 def files(file_dir,t='others'):
     return [file_content(p,t) for p in file_names(file_dir)]
 data = {}
 data['train'] = files(train_image_path)
 data['trimap']= files(trimap_image_path)
-data['alpha'] = files(alpha_image_path,'alpha')
+data['alpha'] = files(alpha_image_path)
 num = len(data['train'])
 def pos_f(index, val):
     while True:
@@ -57,10 +55,10 @@ def cal_alpha_f(F, B, I):
     alpha =  np.sum(((I-B)*(F-B)), 2)/np.sum(((F-B)**2 + 0.0001), 2)
     alpha = np.where((alpha>1),np.ones_like(alpha), alpha)
     alpha = np.where((alpha<0),np.zeros_like(alpha), alpha)
-    return alpha * 255.0
+    return np.expand_dims(alpha, -1) * 255.0
 def generate(n):
     # pick one picture and get the shape
-    count = 0
+    count = 30000
     while True:
         idx = random.randrange(num)
         h, w, _ = data['train'][idx].shape
@@ -82,7 +80,6 @@ def generate(n):
         if count > n-1:
             return
         data_pics = {}
-        data_pics['trimap_f']
 
         # FBI
         data_pics['F'] = data['train'][idx][y1:y1+height,x1:x1+width,:]
@@ -91,35 +88,35 @@ def generate(n):
 
         # trimap_FBI
         data_pics['trimap_f'] = data['trimap'][idx][y1:y1+height,x1:x1+width,:]
-        data_pics['trimap_b'] = data['trimap'][idx][y1:y1+height,x1:x1+width,:]
-        data_pics['trimap_i'] = data['trimap'][idx][y1:y1+height,x1:x1+width,:]
+        data_pics['trimap_b'] = data['trimap'][idx][y2:y2+height,x2:x2+width,:]
+        data_pics['trimap_i'] = data['trimap'][idx][y3:y3+height,x3:x3+width,:]
 
         # distance between F and I, B and I
-        data_pics['distance_fi'] = pow((pow((x1 - x3), 2) + pow((y1 - y3), 2)), 0.5)
-        data_pics['distance_bi'] = pow((pow((x2 - x3), 2) + pow((y2 - y3), 2)), 0.5)
+        data_pics['distance_fi'] = np.full([height, width, 1],pow((pow((x1 - x3), 2) + pow((y1 - y3), 2)), 0.5))
+        data_pics['distance_bi'] = np.full([height, width, 1],pow((pow((x2 - x3), 2) + pow((y2 - y3), 2)), 0.5))
 
         # alpha
         data_pics['real_alpha'] = data['alpha'][idx][y3:y3+height,x3:x3+width,:]
         data_pics['cal_alpha'] = cal_alpha_f(data_pics['F'], data_pics['B'], data_pics['I'])
         data_pics['diff_alpha'] = data_pics['real_alpha'] - data_pics['cal_alpha']
 
-        np.save("/disk3/Graduate-design/data/method2/F/{:0>6}.png".format(count),data_pics['F'])
-        np.save("/disk3/Graduate-design/data/method2/B/{:0>6}.png".format(count),data_pics['B'])
-        np.save("/disk3/Graduate-design/data/method2/I/{:0>6}.png".format(count),data_pics['I'])
+        cv2.imwrite("/disk3/Graduate-design/data/method2/F/{:0>6}.png".format(count),data_pics['F'])
+        cv2.imwrite("/disk3/Graduate-design/data/method2/B/{:0>6}.png".format(count),data_pics['B'])
+        cv2.imwrite("/disk3/Graduate-design/data/method2/I/{:0>6}.png".format(count),data_pics['I'])
 
-        np.save("/disk3/Graduate-design/data/method2/trimap_f/{:0>6}.png".format(count),data_pics['trimap_f'])
-        np.save("/disk3/Graduate-design/data/method2/trimap_b/{:0>6}.png".format(count),data_pics['trimap_b'])
-        np.save("/disk3/Graduate-design/data/method2/trimap_i/{:0>6}.png".format(count),data_pics['trimap_i'])
+        cv2.imwrite("/disk3/Graduate-design/data/method2/trimap_f/{:0>6}.png".format(count),data_pics['trimap_f'])
+        cv2.imwrite("/disk3/Graduate-design/data/method2/trimap_b/{:0>6}.png".format(count),data_pics['trimap_b'])
+        cv2.imwrite("/disk3/Graduate-design/data/method2/trimap_i/{:0>6}.png".format(count),data_pics['trimap_i'])
 
-        np.save("/disk3/Graduate-design/data/method2/real_alpha/{:0>6}.png".format(count),data_pics['real_alpha'])
-        np.save("/disk3/Graduate-design/data/method2/cal_alpha/{:0>6}.png".format(count),data_pics['cal_alpha'])
+        cv2.imwrite("/disk3/Graduate-design/data/method2/real_alpha/{:0>6}.png".format(count),data_pics['real_alpha'])
+        cv2.imwrite("/disk3/Graduate-design/data/method2/cal_alpha/{:0>6}.png".format(count),data_pics['cal_alpha'])
 
         np.save("/disk3/Graduate-design/data/method2/distance_fi/{:0>6}.npy".format(count),data_pics['distance_fi'])
         np.save("/disk3/Graduate-design/data/method2/distance_bi/{:0>6}.npy".format(count),data_pics['distance_bi'])
 
         np.save("/disk3/Graduate-design/data/method2/diff_alpha/{:0>6}.npy".format(count),data_pics['diff_alpha'])
         count+=1
-        if count % 1000 == 0:
+        if count % 100 == 0:
             print count
 
 def main():
