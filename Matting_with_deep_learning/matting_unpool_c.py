@@ -373,10 +373,7 @@ pred_mat_f_l = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat_f),pred_mat_f
 pred_mat_f_l = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat_f_l),pred_mat_f_l,name='res')
 pred_mat_f_l_sm = tf.summary.image('pred_mat_f_l',tf.multiply(pred_mat_f_l,255.0),max_outputs=5)
 
-
-
 alpha_f = tf.divide(tf.cast(alpha,tf.float32),255.0)
-
 
 cou = tf.cast(tf.reduce_sum(tf.where(tf.equal(trimap,128),tf.ones_like(trimap),tf.zeros_like(trimap))), tf.float32)
 
@@ -391,7 +388,6 @@ MAE_his = tf.summary.histogram('MAE_his',mae,family='stage1')
 MSE_his = tf.summary.histogram('MSE_his',mse,family='stage1')
 SAD_his = tf.summary.histogram('SAD_his',sad,family='stage1')
 
-
 MAE_sm = tf.summary.scalar('MAE',mae,family='stage1')
 MSE_sm = tf.summary.scalar('MSE',mse,family='stage1')
 SAD_sm = tf.summary.scalar('SAD',sad,family='stage1')
@@ -404,8 +400,92 @@ MAE_f_sm = tf.summary.scalar('MAE_f',mae_f,family='stage2')
 MSE_f_sm = tf.summary.scalar('MSE_f',mse_f,family='stage2')
 SAD_f_sm = tf.summary.scalar('SAD_f',sad_f,family='stage2')
 
+
+share_result = tf.placeholder(tf.float32, [train_batch_size, image_size, image_size, 1])
+close_result = tf.placeholder(tf.float32, [train_batch_size, image_size, image_size, 1])
+knn_resul    = tf.placeholder(tf.float32, [train_batch_size, image_size, image_size, 1])
+deep_result  = tf.placeholder(tf.float32, [train_batch_size, image_size, image_size, 1])
+
+dcnn_input = tf.concat([rgb / 255.0, share_result, close_result, knn_result, deep_result], axis=-1)
+
+# dcnn_conv1_1
+with tf.name_scope('dcnn_conv1_1') as scope:
+    kernel = tf.Variable(tf.truncated_normal([9, 9, 7, 64], dtype=tf.float32,
+                                 stddev=1e-1), name='weights',trainable=trainable)
+    conv = tf.nn.conv2d(dcnn_input, kernel, [1, 1, 1, 1], padding='SAME')
+    biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
+                         trainable=trainable, name='biases')
+    out = tf.nn.bias_add(conv, biases)
+    dcnn_conv1_1 = tf.nn.relu(out, name=scope)
+
+# dcnn_conv2_1
+with tf.name_scope('dcnn_conv2_1') as scope:
+    kernel = tf.Variable(tf.truncated_normal([1, 1, 7, 64], dtype=tf.float32,
+                                 stddev=1e-1), name='weights',trainable=trainable)
+    conv = tf.nn.conv2d(dcnn_conv1_1, kernel, [1, 1, 1, 1], padding='SAME')
+    biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
+                         trainable=trainable, name='biases')
+    out = tf.nn.bias_add(conv, biases)
+    dcnn_conv2_1 = tf.nn.relu(out, name=scope)
+
+# dcnn_conv2_2
+with tf.name_scope('dcnn_conv2_2') as scope:
+    kernel = tf.Variable(tf.truncated_normal([1, 1,64, 64], dtype=tf.float32,
+                                 stddev=1e-1), name='weights',trainable=trainable)
+    conv = tf.nn.conv2d(dcnn_conv2_1, kernel, [1, 1, 1, 1], padding='SAME')
+    biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
+                         trainable=trainable, name='biases')
+    out = tf.nn.bias_add(conv, biases)
+    dcnn_conv2_2 = tf.nn.relu(out, name=scope)
+
+# dcnn_conv2_3
+with tf.name_scope('dcnn_conv2_3') as scope:
+    kernel = tf.Variable(tf.truncated_normal([1, 1,64, 64], dtype=tf.float32,
+                                 stddev=1e-1), name='weights',trainable=trainable)
+    conv = tf.nn.conv2d(dcnn_conv2_2, kernel, [1, 1, 1, 1], padding='SAME')
+    biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
+                         trainable=trainable, name='biases')
+    out = tf.nn.bias_add(conv, biases)
+    dcnn_conv2_3 = tf.nn.relu(out, name=scope)
+
+# dcnn_conv2_4
+with tf.name_scope('dcnn_conv2_4') as scope:
+    kernel = tf.Variable(tf.truncated_normal([1, 1,64, 64], dtype=tf.float32,
+                                 stddev=1e-1), name='weights',trainable=trainable)
+    conv = tf.nn.conv2d(dcnn_conv2_3, kernel, [1, 1, 1, 1], padding='SAME')
+    biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32),
+                         trainable=trainable, name='biases')
+    out = tf.nn.bias_add(conv, biases)
+    dcnn_conv2_4 = tf.nn.relu(out, name=scope)
+
+# dcnn_conv3_1
+with tf.name_scope('dcnn_conv3_1') as scope:
+    kernel = tf.Variable(tf.truncated_normal([5, 5,64,  1], dtype=tf.float32,
+                                 stddev=1e-1), name='weights',trainable=trainable)
+    conv = tf.nn.conv2d(dcnn_conv2_4, kernel, [1, 1, 1, 1], padding='SAME')
+    biases = tf.Variable(tf.constant(0.0, shape=[1], dtype=tf.float32),
+                         trainable=trainable, name='biases')
+    out = tf.nn.bias_add(conv, biases)
+    dcnn_conv3_1 = tf.nn.relu(out, name=scope)
+    pred_mat_d = dcnn_conv3_1
+    pred_mat_d = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat_d),pred_mat_d)
+    pred_mat_d = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat_d),pred_mat_d)
+    pred_mat_d = tf.where(tf.greater(pred_mat_d,1),tf.ones_like(pred_mat_d),pred_mat_d)
+    pred_mat_d = tf.where(tf.less(pred_mat_d,0),tf.zeros_like(pred_mat_d),pred_mat_d,name='res')
+
+pred_mat_d_sm = tf.summary.image('pred_mat_d',pred_mat_d,max_outputs=5)
+pred_mat_d_l = tf.where(tf.equal(trimap,255),tf.ones_like(pred_mat_d),pred_mat_d)
+pred_mat_d_l = tf.where(tf.equal(trimap,  0),tf.zeros_like(pred_mat_d_l),pred_mat_d_l,name='res')
+pred_mat_d_l_sm = tf.summary.image('pred_mat_d_l',tf.multiply(pred_mat_d_l,255.0),max_outputs=5)
+
+
+
+
+
+
 train_op   = tf.train.AdamOptimizer(learning_rate = 1e-5).minimize(mse)
 train_op_f = tf.train.AdamOptimizer(learning_rate = 1e-4).minimize(mse_f)
+train_op_d = tf.train.AdamOptimizer(learning_rate = 1e-4).minimize(mse_f)
 
 pre = tf.contrib.slim.get_variables_to_restore()
 saver = tf.train.Saver(pre, max_to_keep=5)
@@ -471,7 +551,6 @@ with tf.Session(config=tf.ConfigProto(gpu_options = gpu_options)) as sess:
                     cv2.imwrite("res{:06}.png".format(idx*10+ix),255*pred_mat_s2[ix])
                     cv2.imwrite("alpha{:06}.png".format(idx*10+ix),batch_alpha[ix])
                     cv2.imwrite("trimap{:06}.png".format(idx*10+ix),batch_trimap[ix])
-
                 # show the loss of stage 1 and stage 2
                 count_ += 1
                 s_ += mse_fs
@@ -480,7 +559,6 @@ with tf.Session(config=tf.ConfigProto(gpu_options = gpu_options)) as sess:
                 pdb.set_trace()
             if idx % 5 == 0:
                 train_writer.add_summary(summary,idx)
-
         if idx % 10 == 0:
             ix = idx / 10
             rg_t = np.array([cv2.imread("/disk3/Graduate-design/test/rgb/{:0>6}.png".format(ix*10 + i)) for i in range(10)])
@@ -511,5 +589,3 @@ with tf.Session(config=tf.ConfigProto(gpu_options = gpu_options)) as sess:
                 global_step = idx, latest_filename='latestcheckpoint_file')
             np.save('/disk3/Graduate-design/model/idx.npy',np.array(idx))
         idx += 1
-
-

@@ -1,41 +1,47 @@
-import pdb
-import random
-import cv2
 import numpy as np
+import matplotlib.pyplot as plt
+import cv2
 import pandas as pd
-import matlplotlib.pyplot as plt
+
 from sklearn.cluster import KMeans
 
-cluster_num = 100
+idx = 26
+rgb = cv2.imread("/tmp/deep_matting/test/input_training_lowres/GT{:0>2}.png".format(idx+1))
 
-def random_color():
-    rgbl = [256, 256, 256]
-    rand = np.random.rand(1,3)
-    return np.floor(rand * rgbl)
+trimap = cv2.imread("/tmp/deep_matting/test/trimap_training_lowres/Trimap1/GT{:0>2}.png".format(idx+1))[...,0:1]
 
-for idx in range(27):
-    rgb = cv2.imread("/tmp/deep_learning/")
-    trimap = cv2.imread("/tmp/deep_learning/")
-    rgb_t = np.con
-    data = []
-    for idx_y,y in enumerate(rgb_t):
-        for idx_x,x in enumerate(y):
-            data_pics = []
-            for v in x:
-                data_pics.append(v)
-                data_pics.append(idx_x)
-                data_pics.append(idx_y)
-                data.append(data_pics)
-    kmeans = KMeans(n_cluster=100, random_state=0).fit(data)
-    pdb.set_trace()
-    data = np.array(data)
-    data = pd.DataFrame(data, columns=['g', 'b', 'r', 'x', 'y', 'type'])
-    data['sum'] = data['r'] + data['g'] + data['b']
-    colors = np.array([random_color() for _ in range(cluster_num)])
+rgb_t = np.concatenate([rgb,trimap],2)
 
-    for idx_y,y in enumerate(rgb_c):
-        for idx_x,x in enumerate(y):
-            rgb_c[idx_y][idx_x] = colors[labels[idx_y * rgb_c.shape[1] + idx_x]]
+data = []
 
+for idx_y,y in enumerate(rgb_t):
+    for idx_x,x in enumerate(y):
+        data_pics = []
+        for v in x:
+            data_pics.append(v)
+        data_pics.append(idx_x)
+        data_pics.append(idx_y)
+        data.append(data_pics)
 
-            
+data = pd.DataFrame(data,columns=['g','b','r','x','y','trimap'])
+
+kmeans = KMeans(n_clusters=100, random_state=0).fit(data)
+
+data['sum'] = data['r'] + data['g'] + data['b']
+
+data.insert(7, column='type', value=kmeans.labels_)
+
+color_type = data.groupby(['type']).mean()
+
+color_type  = np.floor(color_type[['g','b','r']])
+
+data = data.join(color_type,how='right',on=['type'], rsuffix='_c')
+
+rgb_c = np.copy(rgb)
+
+colors = data[['g_c','b_c','r_c']]
+for idx_y,y in enumerate(rgb_c):
+    for idx_x,x in enumerate(y):
+        rgb_c[idx_y][idx_x] = colors.loc[idx_y * rgb_c.shape[1] + idx_x]
+
+cv2.imwrite("res/{:0>2}.png".format(idx+1),rgb_c)

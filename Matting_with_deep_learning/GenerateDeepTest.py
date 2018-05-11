@@ -9,6 +9,7 @@ path = '/tmp/deep_matting/test/'
 train_image_path  = path + 'input_training_lowres'
 trimap_image_path = path + 'trimap_training_lowres/Trimap1'
 alpha_image_path  = path + 'gt_training_lowres'
+processed_image_path = path + 'processed'
 width = 320
 height = 320
 def file_names(file_dir):
@@ -25,6 +26,7 @@ data = {}
 data['train'] = files(train_image_path)
 data['trimap']= files(trimap_image_path)
 data['alpha'] = files(alpha_image_path,'alpha')
+data['processed'] = files(processed_image_path)
 num = len(data['train'])
 def pos_f(index, val):
     while True:
@@ -79,9 +81,11 @@ def generate(n):
             data_pics['rgb'] = data['train'][idx][y:y+height,x:x+width,:]
             data_pics['trimap'] = data['trimap'][idx][y:y+height,x:x+width,:]
             data_pics['alpha'] = data['alpha'][idx][y:y+height,x:x+width]
+            data_pics['processed'] = data['processed'][idx][y:y+height,x:x+width]
             cv2.imwrite("/disk3/Graduate-design/test/rgb/{:0>6}.png".format(count),data_pics['rgb'])
             cv2.imwrite("/disk3/Graduate-design/test/trimap/{:0>6}.png".format(count),data_pics['trimap'])
             cv2.imwrite("/disk3/Graduate-design/test/alpha/{:0>6}.png".format(count),data_pics['alpha'])
+            cv2.imwrite("/disk3/Graduate-design/test/processed/{:0>6}.png".format(count),data_pics['processed'])
             count+=1
             if count % 1000 == 0:
                 print count
