@@ -5,11 +5,24 @@ import cv2
 import pandas as pd
 import random
 import glob
-path = '/tmp/deep_matting/test/'
+path = '/disk3/Graduate-design/source/alphamatting/test/'
 train_image_path  = path + 'input_training_lowres'
 trimap_image_path = path + 'trimap_training_lowres/Trimap1'
 alpha_image_path  = path + 'gt_training_lowres'
-processed_image_path = path + 'processed'
+global_image_path = path + 'GlobalMattingResult'
+shared_image_path = path + 'SharedMattingResult'
+knn_image_path = path + 'KNNMattingResult'
+
+dirs = ['/disk3/Graduate-design/data/test/alphamatting/rgb/',
+        '/disk3/Graduate-design/data/test/alphamatting/trimap/',
+        '/disk3/Graduate-design/data/test/alphamatting/alpha/',
+        '/disk3/Graduate-design/data/test/alphamatting/knn/',
+        '/disk3/Graduate-design/data/test/alphamatting/shared/',
+        '/disk3/Graduate-design/data/test/alphamatting/global/',]
+for x in dirs:
+    if not os.path.exists(x):
+        os.mkdir(x)
+
 width = 320
 height = 320
 def file_names(file_dir):
@@ -26,7 +39,9 @@ data = {}
 data['train'] = files(train_image_path)
 data['trimap']= files(trimap_image_path)
 data['alpha'] = files(alpha_image_path,'alpha')
-data['processed'] = files(processed_image_path)
+data['knn'] = files(knn_image_path,'alpha')
+data['global'] = files(global_image_path,'alpha')
+data['shared'] = files(shared_image_path,'alpha')
 num = len(data['train'])
 def pos_f(index, val):
     while True:
@@ -66,8 +81,7 @@ def generate(n):
     # pick one picture and get the shape
     count = 0
     while True:
-        #idx = random.randrange(num)
-        idx = -1
+        idx = random.randrange(num)
         h, w, _ = data['train'][idx].shape
         x = random.randrange(w)
         y = random.randrange(h)
@@ -81,11 +95,16 @@ def generate(n):
             data_pics['rgb'] = data['train'][idx][y:y+height,x:x+width,:]
             data_pics['trimap'] = data['trimap'][idx][y:y+height,x:x+width,:]
             data_pics['alpha'] = data['alpha'][idx][y:y+height,x:x+width]
-            data_pics['processed'] = data['processed'][idx][y:y+height,x:x+width]
-            cv2.imwrite("/disk3/Graduate-design/test/rgb/{:0>6}.png".format(count),data_pics['rgb'])
-            cv2.imwrite("/disk3/Graduate-design/test/trimap/{:0>6}.png".format(count),data_pics['trimap'])
-            cv2.imwrite("/disk3/Graduate-design/test/alpha/{:0>6}.png".format(count),data_pics['alpha'])
-            cv2.imwrite("/disk3/Graduate-design/test/processed/{:0>6}.png".format(count),data_pics['processed'])
+            data_pics['knn'] = data['knn'][idx][y:y+height,x:x+width]
+            data_pics['shared'] = data['shared'][idx][y:y+height,x:x+width]
+            data_pics['global'] = data['global'][idx][y:y+height,x:x+width]
+
+            cv2.imwrite("/disk3/Graduate-design/data/alphamatting/rgb/{:0>6}.png".format(count),data_pics['rgb'])
+            cv2.imwrite("/disk3/Graduate-design/data/alphamatting/trimap/{:0>6}.png".format(count),data_pics['trimap'])
+            cv2.imwrite("/disk3/Graduate-design/data/alphamatting/alpha/{:0>6}.png".format(count),data_pics['alpha'])
+            cv2.imwrite("/disk3/Graduate-design/data/alphamatting/shared/{:0>6}.png".format(count),data_pics['shared'])
+            cv2.imwrite("/disk3/Graduate-design/data/alphamatting/global/{:0>6}.png".format(count),data_pics['global'])
+            cv2.imwrite("/disk3/Graduate-design/data/alphamatting/knn/{:0>6}.png".format(count),data_pics['knn'])
             count+=1
             if count % 1000 == 0:
                 print count

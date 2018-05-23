@@ -6,7 +6,6 @@ import os
 import glob
 import cv2
 import cv2
-import random
 
 nn = 10
 
@@ -50,20 +49,17 @@ def knn_matte(img, trimap, mylambda=100):
 
 
 def main():
-    t = '/disk3/Graduate-design/source/newdataset/'
-    rgb_f = glob.glob(t + 'final_rgb/*.png')
-    trimap_f = glob.glob(t + 'final_trimap/*.png')
+    t = '/disk3/Graduate-design/source/alphamatting/var/'
+    rgb_f = glob.glob(t + 'input_lowres/*.png')
+    trimap_f = glob.glob(t + 'trimap_lowres/Trimap1/*.png')
     if not os.path.exists(t + 'KNNMattingResult/'):
         os.mkdir(t + 'KNNMattingResult/')
-    random.shuffle(rgb_f)
+    rgb_f.sort()
+    trimap_f.sort()
     for i in range(len(rgb_f)):
-        print i
-        rgb_s = rgb_f[i].split('/')
-        trimap_s = '/'.join(rgb_s[:-2]) + '/final_trimap/' + rgb_s[-1]
+        print rgb_f[i]
         img = cv2.imread(rgb_f[i])[:,:,:3]
-        print img.shape
-        trimap = cv2.imread(trimap_s)[:,:,:3]
-        print trimap.shape
+        trimap = cv2.imread(trimap_f[i])[:,:,:3]
         alpha = knn_matte(img, trimap)
         cv2.imwrite(t + 'KNNMattingResult/' + rgb_f[i].split('/')[-1], alpha * 255)
 

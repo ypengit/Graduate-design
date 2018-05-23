@@ -1,13 +1,13 @@
 import os
 import glob
-t = '/disk3/Graduate-design/source/newdataset'
-path = t + '/SharedMattingResult/'
+t = '/disk3/Graduate-design/source/alphamatting/test'
+path = '/disk3/Graduate-design/source/alphamatting/test/SharedMattingResult/'
 if not os.path.exists(path):
     os.mkdir(path)
 def generate():
-    rgb_f = glob.glob(t + '/final_rgb/*.png')
-    trimap_f = glob.glob(t + '/final_trimap/*.png')
-    alpha_f = glob.glob(t + '/final_alpha/*.png')
+    rgb_f = glob.glob(t + '/input_training_lowres/*.png')
+    trimap_f = glob.glob(t + '/trimap_training_lowres/Trimap1/*.png')
+    alpha_f = glob.glob(t + '/gt_training_lowres/*.png')
     rgb_f.sort()
     alpha_f.sort()
     trimap_f.sort()

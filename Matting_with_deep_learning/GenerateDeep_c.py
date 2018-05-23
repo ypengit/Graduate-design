@@ -15,6 +15,8 @@ global_image_path = path + 'GlobalMattingResult'
 shared_image_path = path + 'SharedMattingResult'
 knn_image_path = path + 'KNNMattingResult'
 
+rgb_f = glob.glob(train_image_path + '/*.png')
+
 dirs = ['/disk3/Graduate-design/data/newdataset/rgb/',
         '/disk3/Graduate-design/data/newdataset/trimap/',
         '/disk3/Graduate-design/data/newdataset/alpha/',
@@ -26,6 +28,7 @@ for x in dirs:
 
 width = 320
 height = 320
+num = len(rgb_f)
 def file_names(file_dir):
     file_paths = glob.glob(file_dir + "/*.png")
     file_paths.sort()
@@ -36,16 +39,6 @@ def file_content(filename,t):
     return cv2.imread(filename)
 def files(file_dir,t='others'):
     return [file_content(p,t) for p in file_names(file_dir)]
-data = {}
-data['train'] = files(train_image_path)
-data['trimap']= files(trimap_image_path)
-data['fg'] = files(trimap_image_path)
-data['bg'] = files(trimap_image_path)
-data['alpha'] = files(alpha_image_path,'alpha')
-# data['knn'] = files(knn_image_path,'alpha')
-# data['global'] = files(global_image_path,'alpha')
-# data['shared'] = files(shared_image_path,'alpha')
-num = len(data['train'])
 def pos_f(index, val):
     while True:
         x = random.randrange(data['trimap'][index].shape[0])
@@ -82,39 +75,38 @@ def cal_alpha(F, B, I):
     return alpha
 def generate(n):
     # pick one picture and get the shape
-    count = 0
+    count = 15500
+    dirs = np.load('/disk3/Graduate-design/source/newdataset/names.npy')
     while True:
-        idx = random.randrange(num)
-        h, w, _ = data['train'][idx].shape
-        x = random.randrange(w)
-        y = random.randrange(h)
-        if(x + width < w and y + height < h):
-            if count > n-1:
-                return
-            data_pics = {}
-            # data_pics['idx'] = idx
-            # data_pics['x'] = x
-            # data_pics['y'] = y
-            data_pics['rgb'] = data['train'][idx][y:y+height,x:x+width,:]
-            data_pics['trimap'] = data['trimap'][idx][y:y+height,x:x+width,:]
-            data_pics['alpha'] = data['alpha'][idx][y:y+height,x:x+width]
-            data_pics['fg'] = data['fg'][idx][y:y+height,x:x+width]
-            data_pics['bg'] = data['bg'][idx][y:y+height,x:x+width]
-            data_pics['knn'] = data['knn'][idx][y:y+height,x:x+width]
-            data_pics['shared'] = data['shared'][idx][y:y+height,x:x+width]
-            data_pics['global'] = data['global'][idx][y:y+height,x:x+width]
-
-            cv2.imwrite("/disk3/Graduate-design/data/newdataset/rgb/{:0>6}.png".format(count),data_pics['rgb'])
-            cv2.imwrite("/disk3/Graduate-design/data/newdataset/fg/{:0>6}.png".format(count),data_pics['fg'])
-            cv2.imwrite("/disk3/Graduate-design/data/newdataset/bg/{:0>6}.png".format(count),data_pics['bg'])
-            cv2.imwrite("/disk3/Graduate-design/data/newdataset/trimap/{:0>6}.png".format(count),data_pics['trimap'])
-            cv2.imwrite("/disk3/Graduate-design/data/newdataset/alpha/{:0>6}.png".format(count),data_pics['alpha'])
-            # cv2.imwrite("/disk3/Graduate-design/data/newdataset/shared/{:0>6}.png".format(count),data_pics['shared'])
-            # cv2.imwrite("/disk3/Graduate-design/data/newdataset/global/{:0>6}.png".format(count),data_pics['global'])
-            # cv2.imwrite("/disk3/Graduate-design/data/newdataset/knn/{:0>6}.png".format(count),data_pics['knn'])
-            count+=1
-            if count % 1000 == 0:
-                print count
+        i = random.randrange(len(dirs))
+        pre = '/'.join(rgb_f[i].split('/')[:-2])
+        # suf = rgb_f[i].split('/')[-1]
+        suf = dirs[i]
+        print suf
+        rgb = cv2.imread(rgb_f[i])
+        if not os.path.exists(pre + '/final_alpha/' + suf):
+            print pre + '/final_alpha/' + suf , ' not exists!'
+        alpha = cv2.imread(pre + '/final_alpha/' + suf)
+        bg = cv2.imread(pre + '/final_bg/' + suf)
+        fg = cv2.imread(pre + '/final_fg/' + suf)
+        trimap = cv2.imread(pre + '/final_trimap/' + suf)
+        tmp = 0
+        while tmp < 20:
+            h, w, _ = rgb.shape
+            x = random.randrange(w)
+            y = random.randrange(h)
+            if(x + width < w and y + height < h):
+                if count > n-1:
+                    return
+                tmp += 1
+                cv2.imwrite("/disk3/Graduate-design/data/newdataset/rgb/{:0>6}.png".format(count),rgb[y:y+height, x:x+width, :])
+                cv2.imwrite("/disk3/Graduate-design/data/newdataset/fg/{:0>6}.png".format(count),fg[y:y+height, x:x+width, :])
+                cv2.imwrite("/disk3/Graduate-design/data/newdataset/bg/{:0>6}.png".format(count),bg[y:y+height, x:x+width, :])
+                cv2.imwrite("/disk3/Graduate-design/data/newdataset/trimap/{:0>6}.png".format(count),trimap[y:y+height, x:x+width, :])
+                cv2.imwrite("/disk3/Graduate-design/data/newdataset/alpha/{:0>6}.png".format(count),alpha[y:y+height, x:x+width, :])
+                count+=1
+                if count % 1000 == 0:
+                    print count
 
 def main():
     generate(200000)

@@ -5,9 +5,24 @@ import cv2
 import pandas as pd
 import random
 import glob
-path = '/tmp/deep_matting/var/'
-train_image_path  = path + 'input_lowres'
-trimap_image_path = path + 'trimap_lowres/Trimap1'
+path = '/disk3/Graduate-design/source/alphamatting/var/'
+train_image_path  = path + 'input_training_lowres'
+trimap_image_path = path + 'trimap_training_lowres/Trimap1'
+alpha_image_path  = path + 'gt_training_lowres'
+global_image_path = path + 'GlobalMattingResult'
+shared_image_path = path + 'SharedMattingResult'
+knn_image_path = path + 'KNNMattingResult'
+
+dirs = ['/disk3/Graduate-design/data/alphamatting/var/rgb/',
+        '/disk3/Graduate-design/data/alphamatting/var/trimap/',
+        '/disk3/Graduate-design/data/alphamatting/var/alpha/',
+        '/disk3/Graduate-design/data/alphamatting/var/knn/',
+        '/disk3/Graduate-design/data/alphamatting/var/shared/',
+        '/disk3/Graduate-design/data/alphamatting/var/global/',]
+for x in dirs:
+    if not os.path.exists(x):
+        os.mkdir(x)
+
 width = 320
 height = 320
 def file_names(file_dir):
@@ -15,12 +30,18 @@ def file_names(file_dir):
     file_paths.sort()
     return file_paths
 def file_content(filename,t):
+    if t == 'alpha':
+        return cv2.imread(filename,cv2.CV_8UC1)
     return cv2.imread(filename)
 def files(file_dir,t='others'):
     return [file_content(p,t) for p in file_names(file_dir)]
 data = {}
 data['train'] = files(train_image_path)
 data['trimap']= files(trimap_image_path)
+data['alpha'] = files(alpha_image_path,'alpha')
+data['knn'] = files(knn_image_path,'alpha')
+data['global'] = files(global_image_path,'alpha')
+data['shared'] = files(shared_image_path,'alpha')
 num = len(data['train'])
 def pos_f(index, val):
     while True:
@@ -45,6 +66,17 @@ def get_block(index,pos):
     x = pos['x'] + width/2
     y = pos['y'] + height/2
     return np.lib.pad(data['train'][index], ((width/2,width/2),(height/2,height/2),(0,0)), 'constant', constant_values=(-255))[x-width/2:x+width/2+1,y-height/2:y+height/2+1]
+def real_alpha(index, pos):
+    alpha = data['alpha'][index][pos['x']][pos['y']][0]/255
+    return alpha
+
+def cal_alpha(F, B, I):
+    alpha =  sum((I-B)*(F-B))/sum((F-B)**2 + 0.0001)
+    if alpha > 1:
+        return 1
+    if alpha < 0:
+        return 0
+    return alpha
 def generate(n):
     # pick one picture and get the shape
     count = 0
@@ -62,14 +94,23 @@ def generate(n):
             # data_pics['y'] = y
             data_pics['rgb'] = data['train'][idx][y:y+height,x:x+width,:]
             data_pics['trimap'] = data['trimap'][idx][y:y+height,x:x+width,:]
-            cv2.imwrite("/disk3/Graduate-design/var/rgb/{:0>6}.png".format(count),data_pics['rgb'])
-            cv2.imwrite("/disk3/Graduate-design/var/trimap/{:0>6}.png".format(count),data_pics['trimap'])
+            data_pics['alpha'] = data['alpha'][idx][y:y+height,x:x+width]
+            data_pics['knn'] = data['knn'][idx][y:y+height,x:x+width]
+            data_pics['shared'] = data['shared'][idx][y:y+height,x:x+width]
+            data_pics['global'] = data['global'][idx][y:y+height,x:x+width]
+
+            cv2.imwrite("/disk3/Graduate-design/data/alphamatting/var/rgb/{:0>6}.png".format(count),data_pics['rgb'])
+            cv2.imwrite("/disk3/Graduate-design/data/alphamatting/var/trimap/{:0>6}.png".format(count),data_pics['trimap'])
+            cv2.imwrite("/disk3/Graduate-design/data/alphamatting/var/alpha/{:0>6}.png".format(count),data_pics['alpha'])
+            cv2.imwrite("/disk3/Graduate-design/data/alphamatting/var/shared/{:0>6}.png".format(count),data_pics['shared'])
+            cv2.imwrite("/disk3/Graduate-design/data/alphamatting/var/global/{:0>6}.png".format(count),data_pics['global'])
+            cv2.imwrite("/disk3/Graduate-design/data/alphamatting/var/knn/{:0>6}.png".format(count),data_pics['knn'])
             count+=1
             if count % 1000 == 0:
                 print count
 
 def main():
-    generate(20000)
+    generate(200000)
 
 if __name__ == "__main__":
     main()
